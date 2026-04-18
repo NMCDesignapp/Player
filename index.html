@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Music Player - Ultimate Edition</title>
+    <title>Pro Music Player - IndexedDB Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -51,36 +51,16 @@
         }
         
         .ctrl-btn {
-            background: rgba(0,0,0,0.4); 
-            color: var(--accent); /* Chữ đỏ */
-            border: 1.5px solid var(--accent); /* Viền đỏ */
-            text-shadow: 0 0 8px var(--accent); /* Phát sáng đỏ */
-            box-shadow: 0 0 10px rgba(255, 0, 85, 0.3), inset 0 0 5px rgba(255, 0, 85, 0.1);
-            
+            background: rgba(0,0,0,0.4); color: var(--accent); border: 1.5px solid var(--accent);
+            text-shadow: 0 0 8px var(--accent); box-shadow: 0 0 10px rgba(255, 0, 85, 0.3), inset 0 0 5px rgba(255, 0, 85, 0.1);
             font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
             cursor: pointer; transition: all 0.15s; padding: 0; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             letter-spacing: 0.5px; flex: 1; height: 100%;
         }
-        
-        /* Hiệu ứng nhấn cho tất cả 5 nút */
-        .ctrl-btn:active {
-            background: var(--accent); color: white; text-shadow: 0 0 10px white;
-            box-shadow: 0 0 30px var(--accent), inset 0 0 15px rgba(255,255,255,0.5);
-            transform: scale(0.92); 
-        }
-        
-        /* Nút Loop Khi BẬT - Đổi thành đèn đỏ sáng đặc (như công tắc LED bật) */
-        .ctrl-btn.active-loop {
-            background: var(--accent); 
-            color: white;
-            text-shadow: 0 0 5px white;
-            box-shadow: 0 0 20px var(--accent), inset 0 0 10px rgba(255, 255, 255, 0.2);
-            border: 1.5px solid rgba(255,255,255,0.5);
-        }
-        .ctrl-btn.active-loop:active {
-            box-shadow: 0 0 30px white, inset 0 0 15px white;
-        }
+        .ctrl-btn:active { background: var(--accent); color: white; text-shadow: 0 0 10px white; box-shadow: 0 0 30px var(--accent), inset 0 0 15px rgba(255,255,255,0.5); transform: scale(0.92); }
+        .ctrl-btn.active-loop { background: var(--accent); color: white; text-shadow: 0 0 5px white; box-shadow: 0 0 20px var(--accent), inset 0 0 10px rgba(255, 255, 255, 0.2); border: 1.5px solid rgba(255,255,255,0.5); }
+        .ctrl-btn.active-loop:active { box-shadow: 0 0 30px white, inset 0 0 15px white; }
 
         /* --- KHU VỰC DƯỚI --- */
         .bottom-area { height: 35vh; display: flex; gap: 15px; }
@@ -89,27 +69,18 @@
             overflow-y: auto; flex: 1; display: grid; grid-template-columns: repeat(4, 1fr);
             grid-auto-rows: 90px; gap: 12px; border: 1px solid #666; align-content: start;
         }
-
-        /* Nút bài hát 3D */
         .song-btn {
             background: var(--bg-panel); color: #ddd; border-radius: 8px; position: relative; cursor: pointer;
             display: flex; justify-content: center; align-items: center; padding: 10px;
-            transition: all 0.1s ease; border: none; 
-            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+            transition: all 0.1s ease; border: none; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
         }
-        .song-btn:active {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-            transform: translateY(2px) scale(0.98); color: white;
-        }
-        .song-btn.playing {
-            color: white; box-shadow: 0 0 15px var(--accent), inset 0 0 15px rgba(255,0,85,0.2); border: 2px solid var(--accent);
-        }
+        .song-btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transform: translateY(2px) scale(0.98); color: white; }
+        .song-btn.playing { color: white; box-shadow: 0 0 15px var(--accent), inset 0 0 15px rgba(255,0,85,0.2); border: 2px solid var(--accent); }
         .song-btn.playing:active { box-shadow: inset 0 0 20px var(--accent), 0 0 10px var(--accent); }
         .song-name { font-size: 0.85rem; text-align: center; word-break: break-word; font-weight: 600; line-height: 1.3; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
         .song-settings-icon { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #888; padding: 3px; z-index: 2; opacity: 0; border-radius: 2px; background: rgba(0,0,0,0.3); transition: 0.2s; }
         .song-btn:hover .song-settings-icon { opacity: 1; color: white; background: var(--accent); }
 
-        /* Thanh âm lượng */
         .volume-sidebar {
             background-color: var(--bg-panel); border-radius: 12px;
             display: flex; justify-content: center; align-items: center;
@@ -162,7 +133,6 @@
                     <button class="ctrl-btn" id="btn-prev">PREV</button>
                     <button class="ctrl-btn" id="btn-play">PLAY</button>
                     <button class="ctrl-btn" id="btn-next">NEXT</button>
-                    <!-- Bỏ class active-loop khỏi HTML mặc định -->
                     <button class="ctrl-btn" id="btn-loop">LOOP</button>
                     <button class="ctrl-btn" id="btn-add">ADD</button>
                 </div>
@@ -208,6 +178,57 @@
     </div>
 
     <script>
+        // --- HỆ THỐNG LƯU TRỮ INDEXED DB (LƯU FILE NHẠC VĨNH VIỄN) ---
+        const DB_NAME = 'NMC_Player_DB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'audio_files';
+        let db;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function saveAudioData(id, arrayBuffer) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put({ id, data: arrayBuffer });
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function getAudioData(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(id);
+                request.onsuccess = (e) => resolve(e.target.result ? e.target.result.data : null);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function deleteAudioData(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // --- QUẢN LÝ TRẠNG THÁI & PLAYLIST ---
         const STORAGE_KEY = 'nmc_player_songs';
         function getSongs() { const stored = localStorage.getItem(STORAGE_KEY); return stored ? JSON.parse(stored) : []; }
         function saveSongs(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
@@ -215,8 +236,13 @@
         let songs = getSongs();
         let currentIndex = -1;
         let isPlaying = false;
-        let isLooping = false; // ĐỔI TRUE THÀNH FALSE - MẶC ĐỊNH TẮT
-        let currentVolume = 0.5;
+        
+        // Khôi phục trạng thái Loop
+        let isLooping = localStorage.getItem('nmc_loop') === 'true'; 
+        
+        // Khôi phục Âm lượng
+        let currentVolume = localStorage.getItem('nmc_vol') ? parseFloat(localStorage.getItem('nmc_vol')) : 0.5; 
+        
         let editingIndex = -1;
         
         let mainAudio = new Audio();
@@ -237,13 +263,23 @@
         const ledContainer = document.getElementById('led-bars');
         const btnLoop = document.getElementById('btn-loop');
 
-        function init() {
+        // --- KHỞI TẠO ---
+        async function init() {
+            await openDB(); // Đợi mở cơ sở dữ liệu
             createVisualBars(40);
             createLedBars(20);
-            renderPlaylist();
+            
+            // Áp dụng trạng thái Loop đã lưu
+            if(isLooping) { btnLoop.classList.add('active-loop'); } 
+            else { btnLoop.classList.remove('active-loop'); }
+            
+            // Áp dụng âm lượng đã lưu
+            activeAudio.volume = currentVolume;
             updateLedVisual(currentVolume * 100);
+            
+            renderPlaylist();
             setupEventListeners();
-            setupCustomVolumeDrag(); 
+            setupCustomVolumeDrag();
         }
 
         function createVisualBars(count) { visualizer.innerHTML = ''; for(let i=0; i<count; i++) { let bar = document.createElement('div'); bar.className = 'visual-bar'; visualizer.appendChild(bar); } }
@@ -251,9 +287,24 @@
 
         function stopAllFades() { if (fadeIntervalId) { clearInterval(fadeIntervalId); fadeIntervalId = null; } }
 
-        function playSongAtIndex(index) {
+        // --- LOGIC PHÁT NHẠC (CẬP NHẬT LẤY TỪ INDEXED DB) ---
+        async function playSongAtIndex(index) {
             if (index < 0 || index >= songs.length) return;
             let song = songs[index];
+            
+            // Nếu trang vừa tải lại, URL bị mất, ta cần lấy file từ IndexedDB tạo lại URL
+            if (!song.url || song.url.startsWith('blob:https://') === false) {
+                const arrayBuffer = await getAudioData(song.id);
+                if (arrayBuffer) {
+                    const blob = new Blob([arrayBuffer], { type: song.fileType || 'audio/mpeg' });
+                    song.url = URL.createObjectURL(blob);
+                    saveSongs(songs); // Cập nhật lại URL mới vào localStorage
+                } else {
+                    alert("File nhạc không còn tồn tại hoặc đã bị lỗi. Vui lòng thêm lại bài này!");
+                    return;
+                }
+            }
+
             if (index === currentIndex && isPlaying) { togglePlay(); return; }
 
             let outgoing = (isPlaying && activeAudio && activeAudio.currentTime > 0) ? activeAudio : null;
@@ -271,22 +322,14 @@
                 incoming.volume = 0;
                 
                 incoming.play().then(() => {
-                    isPlaying = true;
-                    document.getElementById('btn-play').innerText = 'PAUSE';
-                    startPlaybackLoop();
-                    startVisualAnimation();
-
+                    isPlaying = true; document.getElementById('btn-play').innerText = 'PAUSE';
+                    startPlaybackLoop(); startVisualAnimation();
                     fadeIntervalId = setInterval(() => {
                         let finishedOut = false, finishedIn = false;
-                        if (outgoing && outVol > 0) {
-                            outVol -= 0.02;
-                            if (outVol <= 0) { outgoing.volume = 0; outgoing.pause(); outgoing.currentTime = 0; finishedOut = true; } 
-                            else { outgoing.volume = outVol; }
-                        } else { finishedOut = true; }
-
+                        if (outgoing && outVol > 0) { outVol -= 0.02; if (outVol <= 0) { outgoing.volume = 0; outgoing.pause(); outgoing.currentTime = 0; finishedOut = true; } else { outgoing.volume = outVol; } } 
+                        else { finishedOut = true; }
                         if (incoming.volume < currentVolume) { incoming.volume = Math.min(incoming.volume + 0.02, currentVolume); } 
                         else { incoming.volume = currentVolume; finishedIn = true; }
-
                         if (finishedOut && finishedIn) { clearInterval(fadeIntervalId); fadeIntervalId = null; activeAudio = incoming; }
                     }, 20);
                 }).catch(err => console.error("Lỗi phát nhạc:", err));
@@ -379,33 +422,62 @@
             document.getElementById('btn-play').addEventListener('click', togglePlay);
             document.getElementById('btn-next').addEventListener('click', () => playSongAtIndex((currentIndex + 1) % songs.length));
             document.getElementById('btn-prev').addEventListener('click', () => playSongAtIndex((currentIndex - 1 + songs.length) % songs.length));
+            
             document.getElementById('btn-loop').addEventListener('click', () => {
                 isLooping = !isLooping;
-                if(isLooping) { btnLoop.classList.add('active-loop'); btnLoop.innerHTML = 'LOOP'; } 
-                else { btnLoop.classList.remove('active-loop'); btnLoop.innerHTML = 'LOOP'; }
+                localStorage.setItem('nmc_loop', isLooping); // Lưu trạng thái Loop
+                if(isLooping) { btnLoop.classList.add('active-loop'); } 
+                else { btnLoop.classList.remove('active-loop'); }
             });
 
             document.getElementById('btn-add').addEventListener('click', () => { document.getElementById('new-song-name').value = ''; document.getElementById('file-input').value = ''; document.getElementById('add-modal').style.display = 'flex'; });
             document.getElementById('file-input').addEventListener('change', function(e) { if (this.files && this.files[0]) { let fileName = this.files[0].name.replace(/\.[^/.]+$/, ""); document.getElementById('new-song-name').value = fileName; } });
+            
+            // SỬA LẠI HÀM THÊM NHẠC: LƯU FILE VÀO INDEXED DB
             document.getElementById('btn-confirm-add').addEventListener('click', () => {
-                let name = document.getElementById('new-song-name').value.trim(); let fileInput = document.getElementById('file-input');
+                let name = document.getElementById('new-song-name').value.trim(); 
+                let fileInput = document.getElementById('file-input');
                 if (!name || !fileInput.files[0]) return alert("Vui lòng nhập tên và chọn file!");
-                let fileUrl = URL.createObjectURL(fileInput.files[0]); let newSong = { id: Date.now(), name: name, url: fileUrl, duration: 300, start: 0, end: 300 };
-                let tempAudio = new Audio(fileUrl);
-                tempAudio.addEventListener('loadedmetadata', () => { newSong.duration = tempAudio.duration; newSong.end = tempAudio.duration; songs.push(newSong); saveSongs(songs); renderPlaylist(); closeModal('add-modal'); });
-                setTimeout(() => { if (newSong.duration === 300) { songs.push(newSong); saveSongs(songs); renderPlaylist(); closeModal('add-modal'); } }, 2000);
+                
+                let file = fileInput.files[0];
+                let newSong = { id: Date.now(), name: name, url: null, fileType: file.type, duration: 300, start: 0, end: 300 };
+                
+                // Đọc file dưới dạng ArrayBuffer
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const arrayBuffer = e.target.result;
+                    await saveAudioData(newSong.id, arrayBuffer); // Lưu file vào IndexedDB
+                    
+                    let tempUrl = URL.createObjectURL(file);
+                    let tempAudio = new Audio(tempUrl);
+                    tempAudio.addEventListener('loadedmetadata', () => {
+                        newSong.duration = tempAudio.duration; newSong.end = tempAudio.duration;
+                        newSong.url = tempUrl; // Lưu tạm URL để phát luôn
+                        songs.push(newSong); saveSongs(songs); renderPlaylist(); closeModal('add-modal');
+                    });
+                    setTimeout(() => { if (newSong.duration === 300) { newSong.url = tempUrl; songs.push(newSong); saveSongs(songs); renderPlaylist(); closeModal('add-modal'); } }, 2000);
+                };
+                reader.readAsArrayBuffer(file);
             });
+
             document.getElementById('btn-save-settings').addEventListener('click', () => {
                 if (editingIndex > -1) { let s = parseInt(document.getElementById('input-start').value); let e = parseInt(document.getElementById('input-end').value); if (s >= 0 && e > s) { songs[editingIndex].start = s; songs[editingIndex].end = e; songs[editingIndex].duration = e - s; saveSongs(songs); if (currentIndex === editingIndex) loadSongUI(songs[currentIndex]); closeModal('settings-modal'); } else alert("Thời gian không hợp lệ!"); }
             });
-            document.getElementById('btn-delete-song').addEventListener('click', () => {
-                if (confirm("Xóa bài này?")) { songs.splice(editingIndex, 1); saveSongs(songs); if (currentIndex === editingIndex) { activeAudio.pause(); activeAudio.currentTime = 0; activeAudio.src = ""; currentIndex = -1; isPlaying = false; mainTitle.innerText = "Danh sách phát"; stopVisualAnimation(); document.getElementById('btn-play').innerText = 'PLAY'; } else if (currentIndex > editingIndex) { currentIndex--; } renderPlaylist(); closeModal('settings-modal'); }
+            
+            // SỬA LẠI NÚT XÓA: XÓA LUÔN FILE TRONG INDEXED DB
+            document.getElementById('btn-delete-song').addEventListener('click', async () => {
+                if (confirm("Xóa bài này?")) { 
+                    await deleteAudioData(songs[editingIndex].id); // Xóa file khỏi DB
+                    songs.splice(editingIndex, 1); saveSongs(songs); 
+                    if (currentIndex === editingIndex) { activeAudio.pause(); activeAudio.currentTime = 0; activeAudio.src = ""; currentIndex = -1; isPlaying = false; mainTitle.innerText = "Danh sách phát"; stopVisualAnimation(); document.getElementById('btn-play').innerText = 'PLAY'; } 
+                    else if (currentIndex > editingIndex) { currentIndex--; } 
+                    renderPlaylist(); closeModal('settings-modal'); 
+                }
             });
         }
 
         function setupCustomVolumeDrag() {
             const volArea = document.getElementById('vol-area');
-            const volSliderHidden = document.getElementById('vol-slider');
             let isDraggingVol = false;
 
             function calculateVolume(e) {
@@ -416,7 +488,7 @@
                 vol = Math.max(0, Math.min(1, vol)); 
                 currentVolume = vol;
                 activeAudio.volume = vol;
-                volSliderHidden.value = vol * 100; 
+                localStorage.setItem('nmc_vol', vol); // Lưu âm lượng
                 updateLedVisual(vol * 100);
             }
 
@@ -437,6 +509,7 @@
         function openSettings(index) { editingIndex = index; const song = songs[index]; document.getElementById('modal-song-name').innerText = song.name; document.getElementById('input-start').value = song.start; document.getElementById('input-end').value = song.end; document.getElementById('settings-modal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+        // Chạy ứng dụng
         init();
     </script>
 </body>
