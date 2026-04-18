@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Music Player - Fixed Audio</title>
+    <title>Pro Music Player - True Crossfade</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -306,14 +306,14 @@
         let songs = getSongs();
         let currentIndex = -1;
         let isPlaying = false;
-        let isLooping = true; // Mặc định Loop ON
+        let isLooping = true;
         let currentVolume = 0.5;
         let editingIndex = -1;
         
         // --- AUDIO ENGINE ---
-        let mainAudio = new Audio(); // Audio chính
-        let fadeAudio = new Audio(); // Audio phụ để Crossfade
-        let activeAudio = mainAudio; // Con trỏ tới audio đang phát âm thanh
+        let mainAudio = new Audio();
+        let fadeAudio = new Audio();
+        let activeAudio = mainAudio;
 
         // Biến điều khiển tua
         let isDraggingProgress = false;
@@ -338,7 +338,6 @@
             updateLedVisual(currentVolume * 100);
             setupEventListeners();
             
-            // Cập nhật UI Loop
             if(isLooping) {
                 btnLoop.classList.add('active-loop');
                 btnLoop.innerHTML = 'LOOP ON';
@@ -363,35 +362,7 @@
             }
         }
 
-        // --- MAIN PLAYBACK LOOP (MỊT MÀ) ---
-        function startPlaybackLoop() {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-            function loop() {
-                if (!isDraggingProgress && isPlaying && songs[currentIndex]) {
-                    // Lấy thời gian thật từ thẻ Audio
-                    let cur = activeAudio.currentTime;
-                    let song = songs[currentIndex];
-                    
-                    // Kiểm tra hết bài
-                    if (cur >= song.end) {
-                        if (isLooping) {
-                            activeAudio.currentTime = song.start; // Lặp lại
-                        } else {
-                            // Chuyển bài (Crossfade logic ở đây)
-                            let next = (currentIndex + 1) % songs.length;
-                            playSongAtIndex(next); // Hàm này xử lý crossfade
-                            return; // Dừng loop hiện tại để playSongAtIndex khởi tạo lại
-                        }
-                    }
-                    updateTimeDisplay();
-                }
-                animationFrameId = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // --- XỬ LÝ PHÁT BÀI & CROSSFADE ---
+        // --- LOGIC CHUYỂN BÀI & CROSSFADE ĐÚNG ĐẮN ---
         function playSongAtIndex(index) {
             if (index < 0 || index >= songs.length) return;
             let song = songs[index];
@@ -402,60 +373,114 @@
                 return;
             }
 
-            // Cập nhật UI
             currentIndex = index;
             renderPlaylist();
             loadSongUI(song);
 
-            // CẤU HÌNH CROSSFADE
-            let outgoing = (currentIndex === index && isPlaying) ? null : activeAudio; // Nếu bấm play lại cùng bài thì không fade out
+            // Xác định âm thanh đi ra và vào
+            let outgoing = (currentIndex === index && isPlaying) ? null : activeAudio;
             let incoming = (activeAudio === mainAudio) ? fadeAudio : mainAudio;
 
             if (outgoing && isPlaying) {
-                // 1. FADE OUT
+                // === BƯỚC 1: GIẢM DẦN BÀI CŨ (FADE OUT) ===
                 let fadeOutInterval = setInterval(() => {
                     if (outgoing.volume > 0.05) {
-                        outgoing.volume -= 0.05;
+                        outgoing.volume -= 0.05; // Giảm 0.05 mỗi 50ms
                     } else {
                         clearInterval(fadeOutInterval);
                         outgoing.pause();
                         outgoing.currentTime = 0;
-
-                        // 2. FADE IN BÀI MỚI
-                        playIncomingSong(incoming, song);
+                        
+                        // Bài cũ đã tắt hẳn -> Bắt đầu bài mới
+                        startNewSongCrossfade(incoming, song);
                     }
                 }, 50);
             } else {
-                // Phát trực tiếp (không cần fade out)
-                playIncomingSong(activeAudio, song);
+                // Phát trực tiếp nếu chưa có bài gì đang chạy
+                startNewSongCrossfade(activeAudio, song);
             }
         }
 
-        function playIncomingSong(audioObj, song) {
+        function startNewSongCrossfade(audioObj, song) {
             audioObj.src = song.url;
             audioObj.currentTime = song.start;
-            audioObj.volume = 0; // Bắt đầu bằng 0 để Fade in
-            
+            audioObj.volume = 0; // Bắt đầu ở mức 0
+
             audioObj.play().then(() => {
                 isPlaying = true;
                 document.getElementById('btn-play').innerText = 'PAUSE';
                 activeAudio = audioObj;
                 
-                // Fade In từ từ
+                startPlaybackLoop();
+                startVisualAnimation();
+
+                // === BƯỚC 2: TĂNG DẦN BÀI MỚI (FADE IN) ===
                 let fadeInInterval = setInterval(() => {
                     if (audioObj.volume < currentVolume) {
                         audioObj.volume += 0.05;
                     } else {
                         clearInterval(fadeInInterval);
-                        audioObj.volume = currentVolume;
+                        audioObj.volume = currentVolume; // Chốt đúng mức volume
                     }
                 }, 50);
-
-                startPlaybackLoop(); // Bắt đầu vòng lặp update UI
-                startVisualAnimation();
             }).catch(err => {
                 console.error("Lỗi phát nhạc:", err);
             });
+        }
+
+        // --- VÒNG LẶP CẬP NHẬT UI (ĐÃ SỬA TUA MỊT) ---
+        function startPlaybackLoop() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            function loop() {
+                if (!isDraggingProgress && isPlaying && songs[currentIndex]) {
+                    let cur = activeAudio.currentTime;
+                    let song = songs[currentIndex];
+                    
+                    // Xử lý hết bài
+                    if (cur >= song.end) {
+                        if (isLooping) {
+                            activeAudio.currentTime = song.start;
+                        } else {
+                            let next = (currentIndex + 1) % songs.length;
+                            playSongAtIndex(next);
+                            return;
+                        }
+                    }
+                    updateTimeDisplay();
+                }
+                animationFrameId = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // --- TUA MỊT MÀ ---
+        function handleSeekChange(value) {
+            let targetTime = parseFloat(value);
+            let song = songs[currentIndex];
+            if (!song) return;
+
+            // Logic: Tua nhanh (Fast Forward) CHỈ KHI ĐANG KÉO
+            let diff = targetTime - activeAudio.currentTime;
+            if (isDraggingProgress && Math.abs(diff) > 2) {
+                activeAudio.playbackRate = 4.0;
+            } else {
+                activeAudio.playbackRate = 1.0;
+            }
+        }
+
+        seekSlider.addEventListener('mousedown', () => { isDraggingProgress = true; });
+        seekSlider.addEventListener('touchstart', () => { isDraggingProgress = true; });
+        seekSlider.addEventListener('input', (e) => { handleSeekChange(e.target.value); updateTimeDisplay(true); });
+        seekSlider.addEventListener('mouseup', finishSeek);
+        seekSlider.addEventListener('touchend', finishSeek);
+
+        function finishSeek() {
+            isDraggingProgress = false;
+            let targetTime = parseFloat(seekSlider.value);
+            activeAudio.currentTime = targetTime;
+            activeAudio.playbackRate = 1.0;
+            updateTimeDisplay();
         }
 
         function togglePlay() {
@@ -477,48 +502,7 @@
             }
         }
 
-        // --- TUA NHANH (SMOOTH SEEK) ---
-        // Chỉ tua nhanh khi người dùng đang giữ chuột/tay vào thanh slider
-        function handleSeekChange(value) {
-            let targetTime = parseFloat(value);
-            let song = songs[currentIndex];
-            if (!song) return;
-
-            // Logic Tua: 
-            // Nếu chênh lệch lớn -> Tua nhanh (Fast Forward)
-            // Nếu đang giữ chuột (isDraggingProgress) -> Tua nhanh
-            let diff = targetTime - activeAudio.currentTime;
-
-            // Chỉ bật Fast Forward nếu đang kéo
-            if (isDraggingProgress && Math.abs(diff) > 2) {
-                activeAudio.playbackRate = 4.0; // Tua nhanh gấp 4
-            } else {
-                activeAudio.playbackRate = 1.0; // Tốc độ bình thường
-            }
-        }
-
-        // --- SỰ KIỆN SLIDER ---
-        seekSlider.addEventListener('mousedown', () => { isDraggingProgress = true; });
-        seekSlider.addEventListener('touchstart', () => { isDraggingProgress = true; });
-
-        seekSlider.addEventListener('input', (e) => {
-            handleSeekChange(e.target.value);
-            updateTimeDisplay(true); // Update text từ giá trị slider
-        });
-
-        seekSlider.addEventListener('mouseup', finishSeek);
-        seekSlider.addEventListener('touchend', finishSeek);
-
-        function finishSeek() {
-            isDraggingProgress = false;
-            // Khi thả ra, set thời gian chính xác và về tốc độ 1x
-            let targetTime = parseFloat(seekSlider.value);
-            activeAudio.currentTime = targetTime;
-            activeAudio.playbackRate = 1.0;
-            updateTimeDisplay();
-        }
-
-        // --- UI HELPERS ---
+        // --- CÁC HÀM UI KHÁC (GIỮ NGUYÊN) ---
         function loadSongUI(song) {
             mainTitle.innerText = song.name;
             seekSlider.min = song.start;
@@ -530,18 +514,9 @@
         function updateTimeDisplay(isManual = false) {
             let song = songs[currentIndex];
             if (!song) return;
-
-            let cur;
-            if (isManual) {
-                cur = parseFloat(seekSlider.value);
-            } else {
-                cur = activeAudio.currentTime;
-            }
-
+            let cur = isManual ? parseFloat(seekSlider.value) : activeAudio.currentTime;
             let remaining = song.end - cur;
-            // Hiển thị thời gian còn lại
             currTimeTxt.innerText = "-" + formatTime(remaining);
-            
             seekSlider.value = cur;
             totalTimeTxt.innerText = formatTime(song.end - song.start);
             mainTime.innerText = `${formatTime(cur)} / ${formatTime(song.end)}`;
@@ -554,7 +529,6 @@
             return `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
         }
 
-        // --- VISUALIZER ---
         function startVisualAnimation() {
             let animInterval = setInterval(() => {
                 if (!isPlaying) {
@@ -595,7 +569,6 @@
             });
         }
 
-        // --- RENDER & SETUP ---
         function renderPlaylist() {
             playlistContainer.innerHTML = '';
             songs.forEach((song, index) => {
@@ -615,17 +588,14 @@
 
         function setupEventListeners() {
             document.getElementById('btn-play').addEventListener('click', togglePlay);
-            
             document.getElementById('btn-next').addEventListener('click', () => {
                 let next = (currentIndex + 1) % songs.length;
                 playSongAtIndex(next);
             });
-            
             document.getElementById('btn-prev').addEventListener('click', () => {
                 let prev = (currentIndex - 1 + songs.length) % songs.length;
                 playSongAtIndex(prev);
             });
-
             document.getElementById('btn-loop').addEventListener('click', () => {
                 isLooping = !isLooping;
                 if(isLooping) {
@@ -636,36 +606,31 @@
                     btnLoop.innerHTML = 'LOOP';
                 }
             });
-
             const volSlider = document.getElementById('vol-slider');
             volSlider.addEventListener('input', (e) => {
                 currentVolume = parseInt(e.target.value) / 100;
                 activeAudio.volume = currentVolume;
                 updateLedVisual(parseInt(e.target.value));
             });
-
+            
             // Add Song
             document.getElementById('btn-add').addEventListener('click', () => {
                 document.getElementById('new-song-name').value = '';
                 document.getElementById('file-input').value = '';
                 document.getElementById('add-modal').style.display = 'flex';
             });
-
             document.getElementById('file-input').addEventListener('change', function(e) {
                 if (this.files && this.files[0]) {
                     let fileName = this.files[0].name.replace(/\.[^/.]+$/, "");
                     document.getElementById('new-song-name').value = fileName;
                 }
             });
-
             document.getElementById('btn-confirm-add').addEventListener('click', () => {
                 let name = document.getElementById('new-song-name').value.trim();
                 let fileInput = document.getElementById('file-input');
                 if (!name || !fileInput.files[0]) return alert("Vui lòng nhập tên và chọn file!");
-
                 let fileUrl = URL.createObjectURL(fileInput.files[0]);
                 let newSong = { id: Date.now(), name: name, url: fileUrl, duration: 300, start: 0, end: 300 };
-
                 let tempAudio = new Audio(fileUrl);
                 tempAudio.addEventListener('loadedmetadata', () => {
                     newSong.duration = tempAudio.duration;
@@ -675,14 +640,13 @@
                     renderPlaylist();
                     closeModal('add-modal');
                 });
-                // Fallback
                 setTimeout(() => {
                     if (newSong.duration === 300) {
                         songs.push(newSong); saveSongs(songs); renderPlaylist(); closeModal('add-modal');
                     }
                 }, 2000);
             });
-
+            
             // Settings
             document.getElementById('btn-save-settings').addEventListener('click', () => {
                 if (editingIndex > -1) {
@@ -698,7 +662,6 @@
                     } else alert("Thời gian không hợp lệ!");
                 }
             });
-
             document.getElementById('btn-delete-song').addEventListener('click', () => {
                 if (confirm("Xóa bài này?")) {
                     songs.splice(editingIndex, 1);
