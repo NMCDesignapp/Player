@@ -41,7 +41,6 @@
             gap: 10px;
         }
 
-        /* MÀN HÌNH CHÍNH */
         .main-screen {
             background: linear-gradient(145deg, #0d0d18 0%, #000005 100%);
             flex: 1;
@@ -91,7 +90,6 @@
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
         }
 
-        /* Top info */
         .top-info {
             position: absolute;
             top: 18px;
@@ -128,7 +126,6 @@
             text-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
         }
 
-        /* VISUALIZER */
         .visual-full {
             position: absolute;
             top: 70px;
@@ -170,7 +167,6 @@
             height: 100%;
         }
 
-        /* CONTROLS AREA */
         .controls-area {
             position: absolute;
             bottom: 15px;
@@ -288,7 +284,6 @@
             50% { box-shadow: 0 0 35px rgba(255, 0, 85, 0.6); }
         }
 
-        /* BOTTOM AREA - playlist + volume sidebar (no rotate) */
         .bottom-area {
             height: 32vh;
             display: flex;
@@ -364,7 +359,33 @@
             width: 100%;
         }
 
-        /* VOLUME SIDEBAR - pushed to the right */
+        /* Nút cài đặt trên mỗi bài hát */
+        .song-settings-icon {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            font-size: 0.7rem;
+            color: #888;
+            background: rgba(0,0,0,0.6);
+            width: 20px;
+            height: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            transition: 0.2s;
+            z-index: 10;
+            opacity: 0.7;
+            cursor: pointer;
+        }
+        .song-settings-icon:hover {
+            opacity: 1;
+            color: #ff0055;
+            background: rgba(0,0,0,0.8);
+            transform: scale(1.1);
+        }
+
         .volume-sidebar {
             background: #12121a;
             border-radius: 16px;
@@ -508,6 +529,8 @@
         .input-group label {
             font-size: 0.8rem;
             color: #aaa;
+            display: block;
+            margin-bottom: 5px;
         }
 
         .input-group input {
@@ -541,6 +564,7 @@
         .modal-actions {
             display: flex;
             gap: 10px;
+            margin-top: 10px;
         }
 
         .btn-modal {
@@ -556,6 +580,9 @@
 
         .btn-modal.cancel {
             background: #333;
+        }
+        .btn-modal.danger {
+            background: #aa2e4e;
         }
     </style>
 </head>
@@ -603,6 +630,7 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- Modal upload nhạc -->
 <div id="upload-modal" class="modal">
     <div class="modal-content">
         <h3>THÊM NHẠC</h3>
@@ -621,9 +649,33 @@
     </div>
 </div>
 
+<!-- Modal cài đặt bài hát (xoá, chỉnh thời gian phát) -->
+<div id="song-settings-modal" class="modal">
+    <div class="modal-content">
+        <h3>CÀI ĐẶT BÀI HÁT</h3>
+        <div class="input-group">
+            <label><i class="fas fa-tag"></i> Tên bài</label>
+            <input type="text" id="settings-song-name" readonly disabled style="background:#1e1e2e;">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-play-circle"></i> Bắt đầu (giây)</label>
+            <input type="number" id="settings-start-time" step="0.1" min="0" value="0">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-stop-circle"></i> Kết thúc (giây) - <span style="color:#ff0055">0 = hết bài</span></label>
+            <input type="number" id="settings-end-time" step="0.1" min="0" value="0">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal danger" id="delete-song-btn"><i class="fas fa-trash-alt"></i> Xoá bài</button>
+            <button class="btn-modal cancel" id="close-settings-modal">Hủy</button>
+            <button class="btn-modal" id="save-settings-btn">Lưu</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ---------- DATA ----------
-    let playlist = [];
+    let playlist = [];          // mỗi phần tử: { name, url, startTime, endTime }
     let currentIndex = 0;
     let isPlaying = false;
     let loopMode = false;
@@ -637,6 +689,9 @@
 
     let systemVolumeLinked = true;
     let currentVolume = 0.5;
+
+    // Biến lưu bài đang chỉnh sửa settings
+    let editingSongIndex = -1;
 
     // DOM elements
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -663,6 +718,7 @@
         barsArray.push(bar);
     }
 
+    // Volume UI
     function updateVolumeUI() {
         let vol = currentVolume;
         volPercentSpan.innerText = Math.round(vol * 100) + '%';
@@ -713,7 +769,7 @@
         updateVolumeUI();
     });
 
-    // Volume slider via touch/mouse on sidebar
+    // Volume touch/mouse
     const volumeSidebar = document.getElementById('volume-sidebar');
     let isDraggingVolume = false;
     function handleVolumeMove(clientY, rect) {
@@ -749,6 +805,7 @@
     });
     window.addEventListener('touchend', () => { isDraggingVolume = false; });
 
+    // Audio Context & Visualizer
     function setupAudioContext() {
         if (audioContext && audioContext.state !== 'closed') return;
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -804,26 +861,57 @@
     }
     updateVisualizer();
 
+    // Helper
     function formatTime(sec) {
-        if (isNaN(sec)) return "0:00";
+        if (isNaN(sec) || !isFinite(sec)) return "0:00";
         let mins = Math.floor(sec / 60);
         let secs = Math.floor(sec % 60);
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
+    // Kiểm tra và áp dụng startTime/endTime khi phát
+    function enforceSongBounds() {
+        if (!playlist[currentIndex]) return;
+        const song = playlist[currentIndex];
+        const start = song.startTime || 0;
+        const end = song.endTime || 0;
+        if (end > 0 && audio.currentTime >= end) {
+            // Kết thúc đoạn
+            if (loopMode) {
+                audio.currentTime = start;
+                audio.play();
+            } else {
+                nextSong();
+            }
+            return;
+        }
+        if (audio.currentTime < start) {
+            audio.currentTime = start;
+        }
+    }
+
+    // Load bài hát
     function loadSong(index) {
         if (!playlist[index]) return;
         const wasPlaying = isPlaying;
         audio.pause();
         isPlaying = false;
-        audio.src = playlist[index].url;
-        songTitleDisplay.innerText = playlist[index].name;
+        const song = playlist[index];
+        audio.src = song.url;
+        songTitleDisplay.innerText = song.name;
         audio.load();
         audio.volume = currentVolume;
         if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+        
         audio.addEventListener('canplaythrough', () => {
-            if (audio.duration) durationSpan.innerText = formatTime(audio.duration);
+            if (audio.duration && isFinite(audio.duration)) {
+                durationSpan.innerText = formatTime(audio.duration);
+                // Áp dụng startTime nếu có
+                const start = song.startTime || 0;
+                if (start > 0 && audio.currentTime < start) audio.currentTime = start;
+            }
         }, { once: true });
+        
         if (wasPlaying) {
             audio.play().then(() => {
                 isPlaying = true;
@@ -833,6 +921,7 @@
         updatePlaylistUI();
     }
 
+    // Cập nhật danh sách phát (có nút settings)
     function updatePlaylistUI() {
         playlistContainer.innerHTML = '';
         playlist.forEach((song, idx) => {
@@ -840,6 +929,15 @@
             btn.classList.add('song-btn');
             if (idx === currentIndex && isPlaying) btn.classList.add('playing');
             btn.innerHTML = `<div class="song-name">${escapeHtml(song.name)}</div>`;
+            // Thêm nút settings
+            const settingsIcon = document.createElement('div');
+            settingsIcon.className = 'song-settings-icon';
+            settingsIcon.innerHTML = '<i class="fas fa-cog"></i>';
+            settingsIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openSongSettings(idx);
+            });
+            btn.appendChild(settingsIcon);
             btn.addEventListener('click', () => {
                 if (currentIndex === idx && isPlaying) {
                     pauseAudio();
@@ -865,6 +963,9 @@
 
     function playAudio() {
         if (!playlist.length) return;
+        const song = playlist[currentIndex];
+        const start = song.startTime || 0;
+        if (audio.readyState >= 2 && audio.currentTime < start) audio.currentTime = start;
         audio.play().then(() => {
             isPlaying = true;
             updatePlayPauseUI();
@@ -898,7 +999,9 @@
     function nextSong() {
         if (!playlist.length) return;
         if (loopMode) {
-            audio.currentTime = 0;
+            const song = playlist[currentIndex];
+            const start = song.startTime || 0;
+            audio.currentTime = start;
             if (!isPlaying) playAudio();
             else audio.play();
             return;
@@ -919,6 +1022,76 @@
         playAudio();
     }
 
+    // Mở modal settings cho bài hát
+    function openSongSettings(index) {
+        editingSongIndex = index;
+        const song = playlist[index];
+        document.getElementById('settings-song-name').value = song.name;
+        document.getElementById('settings-start-time').value = (song.startTime || 0);
+        document.getElementById('settings-end-time').value = (song.endTime || 0);
+        document.getElementById('song-settings-modal').style.display = 'flex';
+    }
+
+    // Lưu settings
+    function saveSongSettings() {
+        if (editingSongIndex === -1) return;
+        const song = playlist[editingSongIndex];
+        let start = parseFloat(document.getElementById('settings-start-time').value);
+        let end = parseFloat(document.getElementById('settings-end-time').value);
+        if (isNaN(start)) start = 0;
+        if (isNaN(end)) end = 0;
+        if (end < 0) end = 0;
+        if (start < 0) start = 0;
+        // Nếu end >0 và end <= start thì vô lý, có thể set end=0
+        if (end > 0 && end <= start) {
+            showToast("Thời gian kết thúc phải lớn hơn bắt đầu, đã đặt lại = 0");
+            end = 0;
+        }
+        song.startTime = start;
+        song.endTime = end;
+        // Nếu bài đang phát, áp dụng ngay
+        if (editingSongIndex === currentIndex && audio.src) {
+            if (audio.currentTime < start) audio.currentTime = start;
+            // Nếu đang quá end thì dừng
+            if (end > 0 && audio.currentTime >= end) {
+                if (loopMode) {
+                    audio.currentTime = start;
+                    audio.play();
+                } else {
+                    nextSong();
+                }
+            }
+        }
+        showToast(`Đã lưu cài đặt cho "${song.name}"`);
+        document.getElementById('song-settings-modal').style.display = 'none';
+        editingSongIndex = -1;
+    }
+
+    // Xoá bài hát
+    function deleteCurrentSong() {
+        if (editingSongIndex === -1) return;
+        const removed = playlist.splice(editingSongIndex, 1)[0];
+        showToast(`Đã xoá "${removed.name}"`);
+        if (playlist.length === 0) {
+            audio.pause();
+            isPlaying = false;
+            currentIndex = 0;
+            songTitleDisplay.innerText = "Chọn bài hát";
+            updatePlayPauseUI();
+        } else {
+            if (editingSongIndex < currentIndex) currentIndex--;
+            else if (editingSongIndex === currentIndex) {
+                if (currentIndex >= playlist.length) currentIndex = playlist.length - 1;
+                if (currentIndex >= 0) loadSong(currentIndex);
+                else { audio.pause(); isPlaying = false; }
+            }
+        }
+        document.getElementById('song-settings-modal').style.display = 'none';
+        editingSongIndex = -1;
+        updatePlaylistUI();
+    }
+
+    // Sự kiện controls
     playPauseBtn.addEventListener('click', () => {
         if (!playlist.length) { showToast("Hãy thêm nhạc trước"); return; }
         if (isPlaying) pauseAudio();
@@ -934,41 +1107,51 @@
     });
 
     audio.addEventListener('timeupdate', () => {
-        if (audio.duration) {
+        if (audio.duration && isFinite(audio.duration)) {
             let percent = (audio.currentTime / audio.duration) * 100;
             seekSlider.value = percent;
             currentTimeSpan.innerText = formatTime(audio.currentTime);
             document.getElementById('current-time-display').innerHTML = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            // Kiểm tra bounds
+            enforceSongBounds();
         }
     });
     audio.addEventListener('ended', () => {
         if (loopMode) {
-            audio.currentTime = 0;
+            const song = playlist[currentIndex];
+            const start = song.startTime || 0;
+            audio.currentTime = start;
             audio.play();
         } else {
             nextSong();
         }
     });
     seekSlider.addEventListener('input', (e) => {
-        if (audio.duration) {
-            audio.currentTime = (e.target.value / 100) * audio.duration;
+        if (audio.duration && isFinite(audio.duration)) {
+            let newTime = (e.target.value / 100) * audio.duration;
+            const song = playlist[currentIndex];
+            const start = song?.startTime || 0;
+            const end = song?.endTime || 0;
+            if (newTime < start) newTime = start;
+            if (end > 0 && newTime > end) newTime = end;
+            audio.currentTime = newTime;
         }
     });
 
     // Upload modal
-    const modal = document.getElementById('upload-modal');
+    const modalUpload = document.getElementById('upload-modal');
     const uploadBtn = document.getElementById('upload-btn');
-    const closeModal = document.getElementById('close-modal');
+    const closeModalUpload = document.getElementById('close-modal');
     const confirmUpload = document.getElementById('confirm-upload');
     const fileUploadArea = document.getElementById('file-upload-area');
     const fileInput = document.getElementById('file-input');
     let selectedFile = null;
 
     uploadBtn.addEventListener('click', () => {
-        modal.style.display = 'flex';
+        modalUpload.style.display = 'flex';
     });
-    closeModal.addEventListener('click', () => {
-        modal.style.display = 'none';
+    closeModalUpload.addEventListener('click', () => {
+        modalUpload.style.display = 'none';
         selectedFile = null;
     });
     fileUploadArea.addEventListener('click', () => {
@@ -982,19 +1165,31 @@
         const customName = document.getElementById('song-title-input').value.trim();
         let songName = customName || selectedFile.name.replace(/\.[^/.]+$/, "");
         const url = URL.createObjectURL(selectedFile);
-        playlist.push({ name: songName, url: url });
+        playlist.push({ name: songName, url: url, startTime: 0, endTime: 0 });
         if (playlist.length === 1) {
             currentIndex = 0;
             loadSong(0);
         } else {
             updatePlaylistUI();
         }
-        modal.style.display = 'none';
+        modalUpload.style.display = 'none';
         selectedFile = null;
         document.getElementById('song-title-input').value = '';
         fileInput.value = '';
         showToast(`Đã thêm: ${songName}`);
     });
+
+    // Modal settings events
+    const settingsModal = document.getElementById('song-settings-modal');
+    const closeSettings = document.getElementById('close-settings-modal');
+    const saveSettings = document.getElementById('save-settings-btn');
+    const deleteBtn = document.getElementById('delete-song-btn');
+    closeSettings.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+        editingSongIndex = -1;
+    });
+    saveSettings.addEventListener('click', saveSongSettings);
+    deleteBtn.addEventListener('click', deleteCurrentSong);
 
     function showToast(msg) {
         const toast = document.getElementById('toast');
