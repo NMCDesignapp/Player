@@ -8,1387 +8,1033 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
 
-        :root {
-            --bg-body: #0a0a0f;
-            --bg-screen: #000000;
-            --bg-panel: #12121a;
-            --btn-bg: #1a1a2e;
-            --btn-border: #333;
-            --accent: #ff0055;
-            --accent-glow: rgba(255, 0, 85, 0.4);
-            --accent2: #00d4ff;
-            --accent2-glow: rgba(0, 212, 255, 0.3);
-            --text-main: #fff;
-            --led-off: #1a1a1a;
-            --led-low: #00e676;
-            --led-mid: #ffea00;
-            --led-high: #ff1744;
-            --shadow-light: #1e1e2e;
-            --shadow-dark: #0a0a12;
-            --glass: rgba(20, 20, 35, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.08);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body {
-            background: var(--bg-body);
-            background-image: 
-                radial-gradient(ellipse at 20% 50%, rgba(255, 0, 85, 0.03) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
+            background: #0a0a0f;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(255, 0, 85, 0.03) 0%, transparent 50%),
+                              radial-gradient(ellipse at 80% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            height: 100vh; height: 100dvh;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; color: white;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: white;
         }
 
         .app-container {
-            width: 100%; max-width: 960px; height: 100%; height: 100dvh;
-            padding: 12px; display: flex; flex-direction: column; gap: 10px;
+            width: 100%;
+            max-width: 1000px;
+            height: 100%;
+            height: 100dvh;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        /* ====== MÀN HÌNH CHÍNH ====== */
+        /* MÀN HÌNH CHÍNH */
         .main-screen {
             background: linear-gradient(145deg, #0d0d18 0%, #000005 100%);
-            flex: 1; border-radius: 16px; position: relative; overflow: hidden;
-            border: 1px solid var(--glass-border);
-            display: flex; flex-direction: column;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.1) inset;
+            flex: 1;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.1);
             min-height: 0;
         }
 
-        /* Animated background particles */
         .main-screen::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 50% 0%, rgba(255,0,85,0.08) 0%, transparent 60%);
-            z-index: 0; pointer-events: none;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(255, 0, 85, 0.08) 0%, transparent 60%);
+            z-index: 0;
+            pointer-events: none;
             animation: ambientPulse 4s ease-in-out infinite alternate;
         }
+
         @keyframes ambientPulse {
             0% { opacity: 0.5; }
             100% { opacity: 1; }
         }
 
         .signature {
-            position: absolute; top: 12px; right: 18px;
+            position: absolute;
+            top: 12px;
+            right: 18px;
             font-family: 'Orbitron', monospace;
-            font-size: 0.75rem; color: #555; z-index: 25; pointer-events: none;
+            font-size: 0.7rem;
+            color: #555;
+            z-index: 25;
+            pointer-events: none;
             letter-spacing: 2px;
         }
-        .signature span { font-weight: 900; color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+
+        .signature span {
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        }
 
         /* Top info */
         .top-info {
-            position: absolute; top: 18px; left: 0; width: 100%;
-            text-align: center; z-index: 20; padding: 0 25px;
+            position: absolute;
+            top: 18px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 20;
+            padding: 0 25px;
         }
+
         .song-title-display {
             font-family: 'Orbitron', monospace;
-            font-size: 1.3rem; font-weight: 700;
-            text-shadow: 0 0 20px rgba(255,0,85,0.3);
-            margin-bottom: 4px; letter-spacing: 1px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
             background: linear-gradient(90deg, #fff, #ff6b9d, #fff);
             background-size: 200% auto;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
             background-clip: text;
+            -webkit-text-fill-color: transparent;
             animation: titleShimmer 3s linear infinite;
         }
+
         @keyframes titleShimmer {
             to { background-position: 200% center; }
         }
+
         .song-time-display {
-            font-size: 0.85rem; color: var(--accent);
+            font-size: 0.8rem;
+            color: #ff0055;
             font-family: 'Orbitron', monospace;
-            text-shadow: 0 0 8px var(--accent-glow);
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
         }
 
-        /* ====== VISUALIZER ====== */
+        /* VISUALIZER */
         .visual-full {
-            position: absolute; top: 70px; left: 0; width: 100%; height: 200px;
-            display: flex; align-items: flex-end; justify-content: center; gap: 3px;
-            z-index: 5; padding: 0 8%; perspective: 600px;
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            z-index: 5;
+            padding: 0 8%;
+            perspective: 600px;
         }
+
         .visual-bar {
-            flex: 1; max-width: 12px; min-width: 4px;
+            flex: 1;
+            max-width: 12px;
+            min-width: 4px;
             border-radius: 3px 3px 0 0;
             transition: height 0.08s ease-out;
             transform-origin: bottom;
         }
 
-        /* Circular visualizer overlay */
         .visual-ring {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 180px; height: 180px; z-index: 4; pointer-events: none; opacity: 0.6;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+            z-index: 4;
+            pointer-events: none;
+            opacity: 0.5;
         }
-        .visual-ring canvas { width: 100%; height: 100%; }
 
-        /* ====== CONTROLS AREA ====== */
+        .visual-ring canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* CONTROLS AREA */
         .controls-area {
-            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-            width: 92%; display: flex; flex-direction: column; gap: 10px; z-index: 30;
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 30;
         }
 
         .progress-wrapper {
             width: 100%;
-            background: var(--glass); backdrop-filter: blur(20px);
-            padding: 10px 15px; border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            background: rgba(20, 20, 35, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 10px 15px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
+
         .progress-time {
             font-family: 'Orbitron', monospace;
-            font-size: 0.7rem; color: #888; width: 48px; text-align: center;
+            font-size: 0.7rem;
+            color: #888;
+            width: 48px;
+            text-align: center;
         }
 
         #seek-slider {
-            flex: 1; height: 5px;
-            background: rgba(255,255,255,0.08); border-radius: 5px;
-            outline: none; -webkit-appearance: none; cursor: pointer;
-            position: relative;
-        }
-        #seek-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px;
-            background: radial-gradient(circle, #fff 60%, var(--accent));
-            border-radius: 50%;
-            box-shadow: 0 0 15px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.5);
-            cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-        }
-        #seek-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 0 25px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.5);
-        }
-        #seek-slider::-moz-range-thumb {
-            width: 18px; height: 18px; border: none;
-            background: radial-gradient(circle, #fff 60%, var(--accent));
-            border-radius: 50%;
-            box-shadow: 0 0 15px var(--accent-glow); cursor: pointer;
+            flex: 1;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
         }
 
-        /* ====== CONTROL BUTTONS ====== */
+        #seek-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle, #fff 60%, #ff0055);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        #seek-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
         .control-row {
-            background: var(--glass); backdrop-filter: blur(20px);
-            border-radius: 14px; padding: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-            border: 1px solid var(--glass-border);
-            height: 58px; gap: 6px;
+            background: rgba(20, 20, 35, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 14px;
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            height: 58px;
+            gap: 6px;
         }
 
         .ctrl-btn {
-            background: rgba(255,255,255,0.03);
-            color: var(--accent);
+            background: rgba(255, 255, 255, 0.03);
+            color: #ff0055;
             border: 1.5px solid rgba(255, 0, 85, 0.5);
-            text-shadow: 0 0 8px var(--accent-glow);
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
             box-shadow: 0 0 12px rgba(255, 0, 85, 0.15), inset 0 0 8px rgba(255, 0, 85, 0.05);
             font-family: 'Orbitron', monospace;
-            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            padding: 0; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            letter-spacing: 1px; flex: 1; height: 100%;
-            position: relative; overflow: hidden;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 1px;
+            flex: 1;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
         }
-        .ctrl-btn::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 0; height: 0; background: rgba(255,255,255,0.15);
-            border-radius: 50%; transform: translate(-50%, -50%);
-            transition: width 0.4s, height 0.4s;
-        }
-        .ctrl-btn:active::after { width: 200%; height: 200%; }
+
         .ctrl-btn:active {
-            background: var(--accent); color: white;
+            background: #ff0055;
+            color: white;
             text-shadow: 0 0 15px white;
-            box-shadow: 0 0 40px var(--accent-glow), inset 0 0 20px rgba(255,255,255,0.3);
-            transform: scale(0.9);
-            border-color: rgba(255,255,255,0.5);
+            box-shadow: 0 0 40px rgba(255, 0, 85, 0.4);
+            transform: scale(0.95);
         }
+
         .ctrl-btn.active-loop {
-            background: linear-gradient(135deg, var(--accent), #ff3377);
-            color: white; text-shadow: 0 0 8px rgba(255,255,255,0.6);
-            box-shadow: 0 0 25px var(--accent-glow), inset 0 0 15px rgba(255, 255, 255, 0.15);
-            border: 1.5px solid rgba(255,255,255,0.3);
+            background: linear-gradient(135deg, #ff0055, #ff3377);
+            color: white;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.4);
             animation: loopGlow 2s ease-in-out infinite;
         }
+
         @keyframes loopGlow {
-            0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
-            50% { box-shadow: 0 0 35px var(--accent-glow), 0 0 60px rgba(255,0,85,0.15); }
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); }
+            50% { box-shadow: 0 0 35px rgba(255, 0, 85, 0.6); }
         }
-        .ctrl-btn.active-loop:active { box-shadow: 0 0 40px white, inset 0 0 20px white; }
 
-        /* ====== BOTTOM AREA ====== */
+        /* BOTTOM AREA - playlist + volume sidebar (remove rotate) */
         .bottom-area {
-            height: 32vh; display: flex; gap: 10px;
+            height: 32vh;
+            display: flex;
+            gap: 10px;
         }
 
-        /* Playlist */
         .playlist-container {
-            background: var(--bg-panel); border-radius: 14px; padding: 12px;
-            overflow-y: auto; flex: 1; display: grid; grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: 80px; gap: 10px;
-            border: 1px solid var(--glass-border);
+            background: #12121a;
+            border-radius: 16px;
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 80px;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             align-content: start;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
-        .playlist-container::-webkit-scrollbar { width: 4px; }
-        .playlist-container::-webkit-scrollbar-track { background: transparent; }
-        .playlist-container::-webkit-scrollbar-thumb { background: rgba(255,0,85,0.3); border-radius: 2px; }
+
+        .playlist-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .playlist-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .playlist-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 0, 85, 0.3);
+            border-radius: 2px;
+        }
 
         .song-btn {
             background: linear-gradient(145deg, #16162a, #0f0f1a);
-            color: #aaa; border-radius: 10px; position: relative; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; padding: 8px;
-            transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.04);
-            box-shadow: 4px 4px 10px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.02);
+            color: #aaa;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4), -2px -2px 8px rgba(255, 255, 255, 0.02);
         }
+
         .song-btn:active {
-            box-shadow: inset 3px 3px 8px rgba(0,0,0,0.5), inset -2px -2px 6px rgba(255,255,255,0.02);
             transform: translateY(2px) scale(0.97);
         }
+
         .song-btn.playing {
             color: white;
-            background: linear-gradient(145deg, rgba(255,0,85,0.15), rgba(255,0,85,0.05));
-            border: 1.5px solid rgba(255,0,85,0.5);
-            box-shadow: 0 0 20px rgba(255,0,85,0.2), inset 0 0 15px rgba(255,0,85,0.1);
-            animation: playingPulse 2s ease-in-out infinite;
+            background: linear-gradient(145deg, rgba(255, 0, 85, 0.2), rgba(255, 0, 85, 0.05));
+            border: 1.5px solid rgba(255, 0, 85, 0.6);
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.2);
+            animation: playingPulse 2s infinite;
         }
-        @keyframes playingPulse {
-            0%, 100% { box-shadow: 0 0 15px rgba(255,0,85,0.15), inset 0 0 10px rgba(255,0,85,0.08); }
-            50% { box-shadow: 0 0 25px rgba(255,0,85,0.3), inset 0 0 20px rgba(255,0,85,0.12); }
-        }
-        .song-btn.playing .song-name { color: #fff; text-shadow: 0 0 8px rgba(255,0,85,0.5); }
-        .song-name {
-            font-size: 0.78rem; text-align: center; word-break: break-word;
-            font-weight: 600; line-height: 1.3; width: 100%;
-        }
-        .song-settings-icon {
-            position: absolute; top: 4px; right: 4px; font-size: 0.65rem;
-            color: #555; padding: 3px; z-index: 2; opacity: 0;
-            border-radius: 4px; background: rgba(0,0,0,0.5); transition: 0.2s;
-        }
-        .song-btn:hover .song-settings-icon { opacity: 1; color: #fff; background: var(--accent); }
 
-        /* ====== VOLUME SIDEBAR - REDESIGNED ====== */
+        @keyframes playingPulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 85, 0.15); }
+            50% { box-shadow: 0 0 25px rgba(255, 0, 85, 0.35); }
+        }
+
+        .song-name {
+            font-size: 0.78rem;
+            text-align: center;
+            word-break: break-word;
+            font-weight: 600;
+            line-height: 1.3;
+            width: 100%;
+        }
+
+        /* VOLUME SIDEBAR - pushed to the right edge */
         .volume-sidebar {
-            background: var(--bg-panel); border-radius: 14px;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            position: relative; padding: 12px 0;
-            border: 1px solid var(--glass-border);
-            width: 80px; min-width: 80px; flex-shrink: 0;
+            background: #12121a;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 85px;
+            min-width: 85px;
+            flex-shrink: 0;
             touch-action: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             gap: 8px;
         }
 
-        /* System volume indicator */
         .sys-vol-label {
             font-family: 'Orbitron', monospace;
-            font-size: 0.55rem; color: #555;
-            text-transform: uppercase; letter-spacing: 1px;
+            font-size: 0.55rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             text-align: center;
         }
+
         .sys-vol-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            padding: 2px 6px; border-radius: 6px;
-            font-size: 0.55rem; font-family: 'Orbitron', monospace;
-            font-weight: 700; letter-spacing: 0.5px;
-            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.55rem;
+            font-family: 'Orbitron';
+            font-weight: 700;
         }
+
         .sys-vol-badge.linked {
-            background: rgba(0, 230, 118, 0.15); color: var(--led-low);
+            background: rgba(0, 230, 118, 0.15);
+            color: #00e676;
             border: 1px solid rgba(0, 230, 118, 0.3);
-            box-shadow: 0 0 8px rgba(0, 230, 118, 0.1);
         }
+
         .sys-vol-badge.unlinked {
-            background: rgba(255, 23, 68, 0.1); color: var(--led-high);
+            background: rgba(255, 23, 68, 0.1);
+            color: #ff1744;
             border: 1px solid rgba(255, 23, 68, 0.2);
         }
-        .sys-vol-badge i { font-size: 0.5rem; }
 
         .led-container {
-            display: flex; flex-direction: column-reverse; gap: 3px;
-            height: 70%; width: 36px; justify-content: flex-start;
-            align-items: center; pointer-events: none;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 4px;
+            height: 70%;
+            width: 40px;
+            justify-content: flex-start;
+            align-items: center;
+            pointer-events: none;
         }
-        .led-bar {
-            width: 100%; height: 12px;
-            background: var(--led-off); border-radius: 3px;
-            transition: background-color 0.12s ease, box-shadow 0.12s ease;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
-        }
-        .led-bar.active { box-shadow: 0 0 8px currentColor; }
 
-        /* Volume percentage */
+        .led-bar {
+            width: 100%;
+            height: 10px;
+            background: #1a1a1a;
+            border-radius: 3px;
+            transition: background-color 0.1s ease, box-shadow 0.1s;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        .led-bar.active {
+            box-shadow: 0 0 6px currentColor;
+        }
+
         .vol-percent {
             font-family: 'Orbitron', monospace;
-            font-size: 1.1rem; font-weight: 900;
-            color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);
-            pointer-events: none; margin-top: 2px;
+            font-size: 1rem;
+            font-weight: 900;
+            color: #ff0055;
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+            pointer-events: none;
+            margin-top: 2px;
         }
 
-        /* ====== AUTO ROTATE BUTTON ====== */
-        .rotate-area {
-            width: 80px; min-width: 80px; flex-shrink: 0;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center; gap: 10px;
-        }
-        .btn-rotate {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: var(--bg-panel); border: 1.5px solid var(--glass-border);
-            color: var(--accent2); font-size: 1.2rem;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            position: relative; overflow: hidden;
-        }
-        .btn-rotate::before {
-            content: ''; position: absolute; top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: conic-gradient(transparent, rgba(0,212,255,0.1), transparent 30%);
-            animation: rotateSpin 3s linear infinite;
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .btn-rotate.active-rotate { border-color: var(--accent2); box-shadow: 0 0 20px var(--accent2-glow); }
-        .btn-rotate.active-rotate::before { opacity: 1; }
-        .btn-rotate.active-rotate i { animation: iconSpin 4s linear infinite; color: var(--accent2); }
-        .btn-rotate:active { transform: scale(0.9); }
-        @keyframes rotateSpin { to { transform: rotate(360deg); } }
-        @keyframes iconSpin { to { transform: rotate(360deg); } }
-
-        .rotate-label {
-            font-family: 'Orbitron', monospace;
-            font-size: 0.5rem; color: #555;
-            text-transform: uppercase; letter-spacing: 1px;
-            text-align: center;
-        }
-        .rotate-status {
-            font-size: 0.55rem; font-family: 'Orbitron', monospace;
-            font-weight: 700; letter-spacing: 0.5px;
-            padding: 2px 6px; border-radius: 6px;
-            transition: all 0.3s;
-        }
-        .rotate-status.on {
-            color: var(--accent2);
-            background: rgba(0,212,255,0.1);
-            border: 1px solid rgba(0,212,255,0.2);
-        }
-        .rotate-status.off {
-            color: #444; background: transparent;
-            border: 1px solid transparent;
+        #vol-slider {
+            display: none;
         }
 
-        #vol-slider { display: none; }
-
-        /* ====== ROTATION LOCK TOAST ====== */
         .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-            background: var(--glass); backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            padding: 12px 24px; border-radius: 12px;
-            font-size: 0.85rem; color: #fff; z-index: 200;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(20, 20, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #fff;
+            z-index: 200;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             pointer-events: none;
             font-family: 'Inter', sans-serif;
         }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        .toast i { margin-right: 8px; }
 
-        /* ====== MODAL ====== */
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
         .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 100;
-            justify-content: center; align-items: center;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
             backdrop-filter: blur(10px);
         }
+
         .modal-content {
             background: linear-gradient(145deg, #1a1a2e, #12121a);
-            padding: 30px; border-radius: 16px; width: 360px;
-            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 16px;
+            width: 360px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
         }
+
         .modal-content h3 {
-            font-family: 'Orbitron', monospace;
-            margin-bottom: 20px; color: var(--accent);
-            font-size: 1rem; letter-spacing: 2px;
+            font-family: 'Orbitron';
+            margin-bottom: 20px;
+            color: #ff0055;
         }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 5px; letter-spacing: 0.5px; }
-        .input-group input[type="text"] {
-            width: 100%; padding: 12px; background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.08); color: white;
-            border-radius: 8px; font-size: 0.9rem;
-            transition: border-color 0.2s;
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 15px;
         }
-        .input-group input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+
+        .input-group label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            color: white;
+            border-radius: 8px;
+        }
 
         .file-upload {
-            border: 2px dashed rgba(255,255,255,0.1); padding: 25px;
-            border-radius: 12px; cursor: pointer; transition: 0.3s;
-            color: #666; font-size: 0.9rem; margin-bottom: 15px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #aaa;
         }
-        .file-upload:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,0,85,0.03); }
-        #file-input { display: none; }
 
-        .modal-actions { display: flex; gap: 10px; }
+        .file-upload:hover {
+            border-color: #ff0055;
+            color: #ff0055;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
         .btn-modal {
-            padding: 12px 20px; border: none; border-radius: 10px;
-            cursor: pointer; color: white; font-weight: 700;
-            font-size: 0.85rem; flex: 1;
-            transition: all 0.2s; letter-spacing: 0.5px;
-        }
-        .btn-modal:active { transform: scale(0.95); }
-        .btn-save { background: linear-gradient(135deg, var(--accent), #ff3377); box-shadow: 0 4px 15px var(--accent-glow); }
-        .btn-close { background: rgba(255,255,255,0.08); }
-        .btn-del { background: linear-gradient(135deg, #d32f2f, #b71c1c); box-shadow: 0 4px 15px rgba(211,47,47,0.3); }
-
-        #settings-modal .modal-content { width: 340px; }
-        #settings-modal input {
-            width: 100%; padding: 14px; margin: 6px 0;
-            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);
-            color: white; border-radius: 8px; font-size: 1rem;
-            font-family: 'Orbitron', monospace;
-        }
-        #settings-modal input:focus { outline: none; border-color: var(--accent); }
-
-        /* ====== RESPONSIVE ====== */
-        @media (max-width: 600px) {
-            .bottom-area { height: 30vh; }
-            .playlist-container { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 70px; }
-            .volume-sidebar { width: 65px; min-width: 65px; }
-            .rotate-area { width: 65px; min-width: 65px; }
-            .song-title-display { font-size: 1rem; }
-            .ctrl-btn { font-size: 0.6rem; }
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #ff0055;
+            color: white;
+            font-weight: bold;
+            flex: 1;
         }
 
-        @media (orientation: landscape) and (max-height: 500px) {
-            .visual-full { height: 120px; top: 55px; }
-            .song-title-display { font-size: 1rem; }
-            .bottom-area { height: 40vh; }
+        .btn-modal.cancel {
+            background: #333;
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="main-screen">
-            <div class="signature">Design by <span>NMC</span></div>
-            <div class="top-info">
-                <div class="song-title-display" id="main-title">Chưa chọn bài</div>
-                <div class="song-time-display" id="main-time">00:00 / 00:00</div>
-            </div>
-            <div class="visual-full" id="visualizer"></div>
-            <div class="visual-ring" id="visual-ring"></div>
-            <div class="controls-area">
-                <div class="progress-wrapper">
-                    <span class="progress-time" id="curr-time-txt">-00:00</span>
-                    <input type="range" id="seek-slider" min="0" max="100" value="0">
-                    <span class="progress-time" id="total-time-txt">00:00</span>
-                </div>
-                <div class="control-row">
-                    <button class="ctrl-btn" id="btn-prev">PREV</button>
-                    <button class="ctrl-btn" id="btn-play">PLAY</button>
-                    <button class="ctrl-btn" id="btn-next">NEXT</button>
-                    <button class="ctrl-btn" id="btn-loop">LOOP</button>
-                    <button class="ctrl-btn" id="btn-add">ADD</button>
-                </div>
-            </div>
+<div class="app-container">
+    <!-- Main Screen -->
+    <div class="main-screen">
+        <div class="signature">NMC<span> PRO</span></div>
+        <div class="top-info">
+            <div class="song-title-display" id="current-song-title">Chọn bài hát</div>
+            <div class="song-time-display" id="current-time-display">0:00 / 0:00</div>
         </div>
 
-        <div class="bottom-area">
-            <div class="playlist-container" id="playlist-container"></div>
-            <div class="volume-sidebar" id="vol-area">
-                <div class="sys-vol-label">SYSTEM</div>
-                <div class="sys-vol-badge linked" id="sys-vol-badge">
-                    <i class="fas fa-link"></i> SYNC
-                </div>
-                <div class="led-container" id="led-bars"></div>
-                <div class="vol-percent" id="vol-percent">50</div>
-                <input type="range" id="vol-slider" min="0" max="100" value="50">
+        <!-- Visualizer bars -->
+        <div class="visual-full" id="visualizerBars"></div>
+        <div class="visual-ring">
+            <canvas id="ringCanvas" width="160" height="160"></canvas>
+        </div>
+
+        <!-- Controls overlay -->
+        <div class="controls-area">
+            <div class="progress-wrapper">
+                <span class="progress-time" id="current-time">0:00</span>
+                <input type="range" id="seek-slider" value="0" step="0.01">
+                <span class="progress-time" id="duration-time">0:00</span>
             </div>
-            <div class="rotate-area">
-                <button class="btn-rotate" id="btn-rotate" title="Tự xoay màn hình">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <div class="rotate-label">ROTATE</div>
-                <div class="rotate-status off" id="rotate-status">OFF</div>
+            <div class="control-row">
+                <div class="ctrl-btn" id="prev-btn"><i class="fas fa-backward-step"></i> <span style="margin-left:6px">PREV</span></div>
+                <div class="ctrl-btn" id="play-pause-btn"><i class="fas fa-play"></i> <span style="margin-left:6px">PLAY</span></div>
+                <div class="ctrl-btn" id="next-btn"><i class="fas fa-forward-step"></i> <span style="margin-left:6px">NEXT</span></div>
+                <div class="ctrl-btn" id="loop-btn"><i class="fas fa-repeat"></i> <span style="margin-left:6px">LOOP</span></div>
+                <div class="ctrl-btn" id="upload-btn"><i class="fas fa-plus-circle"></i> <span style="margin-left:6px">ADD</span></div>
             </div>
         </div>
     </div>
 
-    <!-- Toast notification -->
-    <div class="toast" id="toast"><i class="fas fa-info-circle"></i><span id="toast-text"></span></div>
-
-    <div class="modal" id="add-modal">
-        <div class="modal-content">
-            <h3>Thêm nhạc từ máy</h3>
-            <div class="input-group"><label>Tên bài hát</label><input type="text" id="new-song-name" placeholder="Nhập tên hiển thị..."></div>
-            <div class="file-upload" onclick="document.getElementById('file-input').click()"><i class="fas fa-music"></i>&nbsp; Chọn file nhạc từ bộ nhớ</div>
-            <input type="file" id="file-input" accept="audio/*">
-            <div class="modal-actions">
-                <button class="btn-modal btn-close" onclick="closeModal('add-modal')">Hủy</button>
-                <button class="btn-modal btn-save" id="btn-confirm-add">Thêm vào danh sách</button>
-            </div>
+    <!-- Bottom: Playlist + Volume Sidebar (removed rotate) -->
+    <div class="bottom-area">
+        <div class="playlist-container" id="playlist-container"></div>
+        <div class="volume-sidebar" id="volume-sidebar">
+            <div class="sys-vol-label">VOLUME</div>
+            <div class="led-container" id="led-container"></div>
+            <div class="vol-percent" id="vol-percent">50%</div>
+            <div class="sys-vol-badge linked" id="sys-vol-badge"><i class="fas fa-volume-up"></i> SYSTEM</div>
         </div>
     </div>
+</div>
 
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <h3>Cài đặt bài hát</h3>
-            <p id="modal-song-name" style="color:#666; font-size:0.85rem; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></p>
-            <label style="display:block; text-align:left; font-size:0.75rem; margin-left:5px; color:#555;">Bắt đầu (giây)</label>
-            <input type="number" id="input-start" placeholder="0">
-            <label style="display:block; text-align:left; font-size:0.75rem; margin-left:5px; color:#555;">Kết thúc (giây)</label>
-            <input type="number" id="input-end" placeholder="Kết thúc">
-            <div class="modal-actions">
-                <button class="btn-modal btn-del" id="btn-delete-song">Xóa</button>
-                <button class="btn-modal btn-save" id="btn-save-settings">Lưu</button>
-            </div>
-            <button class="btn-modal" onclick="document.getElementById('settings-modal').style.display='none'" style="width:100%; margin-top:15px; background:rgba(255,255,255,0.08);">Đóng</button>
+<div id="toast" class="toast"></div>
+
+<!-- Modal upload -->
+<div id="upload-modal" class="modal">
+    <div class="modal-content">
+        <h3>THÊM NHẠC</h3>
+        <div class="file-upload" id="file-upload-area">
+            <i class="fas fa-cloud-upload-alt"></i> Chọn file MP3
         </div>
+        <div class="input-group">
+            <label>Tên hiển thị (tùy chọn)</label>
+            <input type="text" id="song-title-input" placeholder="Tên bài hát">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal cancel" id="close-modal">Hủy</button>
+            <button class="btn-modal" id="confirm-upload">Thêm</button>
+        </div>
+        <input type="file" id="file-input" accept="audio/mp3,audio/mpeg">
     </div>
+</div>
 
-    <script>
-        // ========== TOAST NOTIFICATION ==========
-        function showToast(message, duration = 2000) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-text').innerText = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), duration);
-        }
+<script>
+    // ---------- DATA ----------
+    let playlist = [];
+    let currentIndex = 0;
+    let isPlaying = false;
+    let loopMode = false;   // false = normal, true = loop one
+    let audio = new Audio();
+    let analyser = null;
+    let sourceNode = null;
+    let audioContext = null;
+    let animationId = null;
+    let ringCtx = null;
+    let barsArray = [];
 
-        // ========== SYSTEM VOLUME CONTROL (via AudioContext) ==========
-        // Web Audio API can only control the audio within the page, not the OS system volume.
-        // However we sync the volume slider to also control the GainNode for best experience.
-        let audioContext = null;
-        let gainNode = null;
-        let sourceNode = null;
-        let systemVolumeLinked = true; // True = volume slider controls both player & gain
+    // Volume handling
+    let systemVolumeLinked = true;       // follow system volume (0-1)
+    let currentVolume = 0.5;             // 0..1
 
-        function initAudioContext() {
-            if (audioContext) return;
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioContext.createGain();
-            gainNode.connect(audioContext.destination);
-            gainNode.gain.value = currentVolume;
-        }
+    // DOM elements
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const loopBtn = document.getElementById('loop-btn');
+    const seekSlider = document.getElementById('seek-slider');
+    const currentTimeSpan = document.getElementById('current-time');
+    const durationSpan = document.getElementById('duration-time');
+    const songTitleDisplay = document.getElementById('current-song-title');
+    const playlistContainer = document.getElementById('playlist-container');
+    const volPercentSpan = document.getElementById('vol-percent');
+    const ledContainer = document.getElementById('led-container');
+    const sysVolBadge = document.getElementById('sys-vol-badge');
 
-        function connectAudioToContext(audioElement) {
-            initAudioContext();
-            if (audioContext.state === 'suspended') audioContext.resume();
-            
-            // Disconnect old source if exists
-            if (sourceNode) {
-                try { sourceNode.disconnect(); } catch(e) {}
+    // Visualizer elements
+    const visualizerDiv = document.getElementById('visualizerBars');
+    const ringCanvas = document.getElementById('ringCanvas');
+    ringCtx = ringCanvas.getContext('2d');
+
+    // Create 32 bars
+    for (let i = 0; i < 32; i++) {
+        const bar = document.createElement('div');
+        bar.classList.add('visual-bar');
+        visualizerDiv.appendChild(bar);
+        barsArray.push(bar);
+    }
+
+    // Helper: update volume display & LED
+    function updateVolumeUI() {
+        let vol = currentVolume;
+        volPercentSpan.innerText = Math.round(vol * 100) + '%';
+        // update LED bars (10 LEDs)
+        const ledCount = 10;
+        const activeCount = Math.floor(vol * ledCount);
+        const ledBars = document.querySelectorAll('.led-bar');
+        ledBars.forEach((led, idx) => {
+            const isActive = idx < activeCount;
+            if (isActive) {
+                led.classList.add('active');
+                if (vol <= 0.33) led.style.backgroundColor = 'var(--led-low)';
+                else if (vol <= 0.66) led.style.backgroundColor = 'var(--led-mid)';
+                else led.style.backgroundColor = 'var(--led-high)';
+            } else {
+                led.classList.remove('active');
+                led.style.backgroundColor = '#1a1a1a';
             }
-            
-            try {
-                sourceNode = audioContext.createMediaElementSource(audioElement);
-                sourceNode.connect(gainNode);
-            } catch(e) {
-                // Already connected, that's fine
-                console.log('Audio source already connected');
+        });
+        // update system link badge
+        if (systemVolumeLinked) {
+            sysVolBadge.className = 'sys-vol-badge linked';
+            sysVolBadge.innerHTML = '<i class="fas fa-link"></i> SYSTEM LINK';
+        } else {
+            sysVolBadge.className = 'sys-vol-badge unlinked';
+            sysVolBadge.innerHTML = '<i class="fas fa-unlink"></i> MANUAL';
+        }
+    }
+
+    // Build LED bars
+    function buildLEDs() {
+        ledContainer.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+            const led = document.createElement('div');
+            led.classList.add('led-bar');
+            ledContainer.appendChild(led);
+        }
+        updateVolumeUI();
+    }
+    buildLEDs();
+
+    // Actually set audio volume
+    function setVolume(vol) {
+        vol = Math.min(1, Math.max(0, vol));
+        currentVolume = vol;
+        if (audio) audio.volume = vol;
+        updateVolumeUI();
+    }
+
+    // Toggle system link
+    sysVolBadge.addEventListener('click', (e) => {
+        systemVolumeLinked = !systemVolumeLinked;
+        if (systemVolumeLinked) {
+            // Fetch actual system volume? We'll use a trick: create a gain? But browser can't read real system volume.
+            // We simulate "linked" means it follows the browser's audio element volume? Actually we'll just keep currentVolume but badge changes.
+            // In real UX, linking means volume controls affect system? Not possible. We'll just treat as "auto sync" concept but here manual.
+            // For demo, linking just shows status, still use same slider.
+            showToast("Chế độ liên kết hệ thống (giả lập)");
+        } else {
+            showToast("Điều chỉnh thủ công");
+        }
+        updateVolumeUI();
+    });
+
+    // Volume handling via touch/mouse on sidebar
+    const volumeSidebar = document.getElementById('volume-sidebar');
+    let isDraggingVolume = false;
+    function handleVolumeMove(clientY, rect) {
+        let yRelative = (rect.bottom - clientY) / rect.height;
+        yRelative = Math.min(1, Math.max(0, yRelative));
+        setVolume(yRelative);
+        if (!systemVolumeLinked) {
+            // manual mode
+        } else {
+            // if linked, also set (still same)
+        }
+    }
+    volumeSidebar.addEventListener('mousedown', (e) => {
+        isDraggingVolume = true;
+        const rect = volumeSidebar.getBoundingClientRect();
+        handleVolumeMove(e.clientY, rect);
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (isDraggingVolume) {
+            const rect = volumeSidebar.getBoundingClientRect();
+            handleVolumeMove(e.clientY, rect);
+        }
+    });
+    window.addEventListener('mouseup', () => { isDraggingVolume = false; });
+    volumeSidebar.addEventListener('touchstart', (e) => {
+        isDraggingVolume = true;
+        const rect = volumeSidebar.getBoundingClientRect();
+        const touch = e.touches[0];
+        handleVolumeMove(touch.clientY, rect);
+        e.preventDefault();
+    });
+    window.addEventListener('touchmove', (e) => {
+        if (isDraggingVolume && e.touches.length) {
+            const rect = volumeSidebar.getBoundingClientRect();
+            handleVolumeMove(e.touches[0].clientY, rect);
+        }
+    });
+    window.addEventListener('touchend', () => { isDraggingVolume = false; });
+
+    // Setup audio visualizer
+    function setupAudioContext() {
+        if (audioContext && audioContext.state !== 'closed') return;
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 64;
+        sourceNode = audioContext.createMediaElementSource(audio);
+        sourceNode.connect(analyser);
+        analyser.connect(audioContext.destination);
+        sourceNode.connect(audioContext.destination);
+        if (audioContext.state === 'suspended') audioContext.resume();
+    }
+
+    function updateVisualizer() {
+        if (!analyser) {
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(updateVisualizer);
+            return;
+        }
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(dataArray);
+        const step = Math.floor(dataArray.length / barsArray.length);
+        for (let i = 0; i < barsArray.length; i++) {
+            let val = dataArray[i * step] || 0;
+            let height = (val / 255) * 80 + 4;
+            barsArray[i].style.height = height + 'px';
+            let hue = 320 + (val / 255) * 40;
+            barsArray[i].style.backgroundColor = `hsl(${hue}, 100%, 60%)`;
+            barsArray[i].style.boxShadow = `0 0 ${val / 40}px #ff0055`;
+        }
+        // Ring canvas
+        if (ringCtx) {
+            ringCtx.clearRect(0, 0, 160, 160);
+            let avg = 0;
+            for (let i = 0; i < dataArray.length; i++) avg += dataArray[i];
+            avg /= dataArray.length;
+            let radius = 40 + (avg / 255) * 50;
+            ringCtx.beginPath();
+            ringCtx.arc(80, 80, radius, 0, Math.PI * 2);
+            ringCtx.strokeStyle = `rgba(255, 0, 85, ${0.3 + avg / 255 * 0.5})`;
+            ringCtx.lineWidth = 3;
+            ringCtx.stroke();
+            for (let i = 0; i < 12; i++) {
+                let angle = (Date.now() / 300 + i) % (Math.PI * 2);
+                let r = 70 + (avg / 255) * 20;
+                let x = 80 + Math.cos(angle) * r;
+                let y = 80 + Math.sin(angle) * r;
+                ringCtx.fillStyle = `#ff0055`;
+                ringCtx.beginPath();
+                ringCtx.arc(x, y, 3 + avg / 80, 0, 2 * Math.PI);
+                ringCtx.fill();
             }
         }
+        animationId = requestAnimationFrame(updateVisualizer);
+    }
+    updateVisualizer();
 
-        function updateSystemVolume(vol) {
-            if (gainNode) {
-                gainNode.gain.setTargetAtTime(vol, audioContext.currentTime, 0.02);
-            }
-        }
+    // Load song
+    function loadSong(index) {
+        if (!playlist[index]) return;
+        audio.pause();
+        isPlaying = false;
+        audio.src = playlist[index].url;
+        songTitleDisplay.innerText = playlist[index].name;
+        audio.load();
+        audio.volume = currentVolume;
+        if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+        setTimeout(() => {
+            if (audio.duration) durationSpan.innerText = formatTime(audio.duration);
+        }, 200);
+        updatePlaylistUI();
+    }
 
-        // ========== SCREEN ORIENTATION / ROTATION ==========
-        let autoRotateEnabled = false;
-        let rotateInterval = null;
-        const btnRotate = document.getElementById('btn-rotate');
-        const rotateStatus = document.getElementById('rotate-status');
+    function formatTime(sec) {
+        if (isNaN(sec)) return "0:00";
+        let mins = Math.floor(sec / 60);
+        let secs = Math.floor(sec % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
 
-        // Check if screen orientation API is available
-        function hasOrientationAPI() {
-            return 'orientation' in screen;
-        }
-
-        function toggleAutoRotate() {
-            autoRotateEnabled = !autoRotateEnabled;
-
-            if (autoRotateEnabled) {
-                btnRotate.classList.add('active-rotate');
-                rotateStatus.className = 'rotate-status on';
-                rotateStatus.innerText = 'ON';
-
-                // Try to unlock screen orientation
-                if (hasOrientationAPI()) {
-                    screen.orientation.unlock().then(() => {
-                        showToast('🎬 Tự xoay màn hình: BẬT');
-                    }).catch(() => {
-                        showToast('🎬 Xoay UI tự động (trình duyệt đã khóa)');
-                        startUIRotation();
-                    });
+    function updatePlaylistUI() {
+        playlistContainer.innerHTML = '';
+        playlist.forEach((song, idx) => {
+            const btn = document.createElement('div');
+            btn.classList.add('song-btn');
+            if (idx === currentIndex && isPlaying) btn.classList.add('playing');
+            btn.innerHTML = `<div class="song-name">${song.name}</div>`;
+            btn.addEventListener('click', () => {
+                if (currentIndex === idx && isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    updatePlayPauseUI();
                 } else {
-                    showToast('🔄 Chế độ xoay UI tự động');
-                    startUIRotation();
+                    currentIndex = idx;
+                    loadSong(currentIndex);
+                    playAudio();
                 }
-
-                // Listen for real orientation changes
-                if (hasOrientationAPI()) {
-                    screen.orientation.addEventListener('change', handleOrientationChange);
-                }
-                window.addEventListener('orientationchange', handleOrientationChange);
-                window.addEventListener('resize', handleResizeRotation);
-
-            } else {
-                btnRotate.classList.remove('active-rotate');
-                rotateStatus.className = 'rotate-status off';
-                rotateStatus.innerText = 'OFF';
-
-                // Lock to portrait
-                if (hasOrientationAPI()) {
-                    screen.orientation.lock('portrait').catch(() => {});
-                }
-                if (rotateInterval) { clearInterval(rotateInterval); rotateInterval = null; }
-
-                // Reset UI rotation
-                document.querySelector('.app-container').style.transform = '';
-
-                screen.orientation.removeEventListener('change', handleOrientationChange);
-                window.removeEventListener('orientationchange', handleOrientationChange);
-                window.removeEventListener('resize', handleResizeRotation);
-
-                showToast('🔒 Xoay màn hình: TẮT');
-            }
-
-            localStorage.setItem('nmc_rotate', autoRotateEnabled);
-        }
-
-        function handleOrientationChange() {
-            if (!autoRotateEnabled) return;
-            const orientation = screen.orientation ? screen.orientation.type : '';
-            
-            // Auto-adjust layout based on actual orientation
-            const container = document.querySelector('.app-container');
-            if (orientation.includes('landscape')) {
-                container.style.flexDirection = 'row';
-                container.style.flexWrap = 'wrap';
-            } else {
-                container.style.flexDirection = 'column';
-                container.style.flexWrap = 'nowrap';
-            }
-        }
-
-        function handleResizeRotation() {
-            if (!autoRotateEnabled) return;
-            // Responsive adjustment on resize
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            
-            if (w > h) {
-                // Landscape mode optimizations
-                document.querySelector('.visual-full').style.height = '150px';
-                document.querySelector('.bottom-area').style.height = '45vh';
-            } else {
-                document.querySelector('.visual-full').style.height = '200px';
-                document.querySelector('.bottom-area').style.height = '32vh';
-            }
-        }
-
-        // Fallback: UI auto-rotation animation for devices without orientation API
-        function startUIRotation() {
-            if (rotateInterval) clearInterval(rotateInterval);
-            
-            const orientations = ['portrait', 'landscape'];
-            let idx = 0;
-
-            // Show a hint, don't actually rotate the UI (that would be disorienting)
-            // Instead, toggle layout between portrait and landscape friendly
-            rotateInterval = setInterval(() => {
-                // This is just a visual indicator that rotation is being handled
-                // Actual rotation happens via CSS media queries for orientation
-            }, 5000);
-        }
-
-        // ========== INDEXED DB ==========
-        const DB_NAME = 'NMC_Player_DB';
-        const DB_VERSION = 1;
-        const STORE_NAME = 'audio_files';
-        let db;
-
-        function openDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = (e) => {
-                    const database = e.target.result;
-                    if (!database.objectStoreNames.contains(STORE_NAME)) {
-                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    }
-                };
-                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-                request.onerror = (e) => reject(e.target.error);
+                updatePlaylistUI();
             });
+            playlistContainer.appendChild(btn);
+        });
+    }
+
+    function playAudio() {
+        if (!playlist.length) return;
+        audio.play().then(() => {
+            isPlaying = true;
+            updatePlayPauseUI();
+            updatePlaylistUI();
+        }).catch(e => console.log(e));
+        if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+    }
+
+    function pauseAudio() {
+        audio.pause();
+        isPlaying = false;
+        updatePlayPauseUI();
+        updatePlaylistUI();
+    }
+
+    function updatePlayPauseUI() {
+        const icon = playPauseBtn.querySelector('i');
+        const span = playPauseBtn.querySelector('span');
+        if (isPlaying) {
+            icon.className = 'fas fa-pause';
+            span.innerText = 'PAUSE';
+        } else {
+            icon.className = 'fas fa-play';
+            span.innerText = 'PLAY';
         }
+    }
 
-        function saveAudioData(id, arrayBuffer) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                store.put({ id, data: arrayBuffer });
-                tx.oncomplete = () => resolve();
-                tx.onerror = (e) => reject(e.target.error);
-            });
+    // Next / Prev with correct index handling
+    function nextSong() {
+        if (!playlist.length) return;
+        if (loopMode) {
+            // loop current song
+            audio.currentTime = 0;
+            if (!isPlaying) playAudio();
+            else audio.play();
+            return;
         }
+        let newIndex = currentIndex + 1;
+        if (newIndex >= playlist.length) newIndex = 0;
+        currentIndex = newIndex;
+        loadSong(currentIndex);
+        playAudio();
+    }
 
-        function getAudioData(id) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const request = store.get(id);
-                request.onsuccess = (e) => resolve(e.target.result ? e.target.result.data : null);
-                request.onerror = (e) => reject(e.target.error);
-            });
+    function prevSong() {
+        if (!playlist.length) return;
+        let newIndex = currentIndex - 1;
+        if (newIndex < 0) newIndex = playlist.length - 1;
+        currentIndex = newIndex;
+        loadSong(currentIndex);
+        playAudio();
+    }
+
+    // Event listeners
+    playPauseBtn.addEventListener('click', () => {
+        if (!playlist.length) { showToast("Hãy thêm nhạc trước"); return; }
+        if (isPlaying) pauseAudio();
+        else playAudio();
+    });
+    prevBtn.addEventListener('click', prevSong);
+    nextBtn.addEventListener('click', nextSong);
+    loopBtn.addEventListener('click', () => {
+        loopMode = !loopMode;
+        if (loopMode) loopBtn.classList.add('active-loop');
+        else loopBtn.classList.remove('active-loop');
+        showToast(loopMode ? "Lặp lại bài hiện tại" : "Tắt lặp");
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
+            let percent = (audio.currentTime / audio.duration) * 100;
+            seekSlider.value = percent;
+            currentTimeSpan.innerText = formatTime(audio.currentTime);
+            document.getElementById('current-time-display').innerHTML = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
         }
-
-        function deleteAudioData(id) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                store.delete(id);
-                tx.oncomplete = () => resolve();
-                tx.onerror = (e) => reject(e.target.error);
-            });
+    });
+    audio.addEventListener('ended', () => {
+        if (loopMode) {
+            audio.currentTime = 0;
+            audio.play();
+        } else {
+            nextSong();
         }
-
-        // ========== STATE MANAGEMENT ==========
-        const STORAGE_KEY = 'nmc_player_songs';
-        function getSongs() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-        function saveSongs(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
-
-        let songs = getSongs();
-        let currentIndex = -1;
-        let isPlaying = false;
-        let isLooping = localStorage.getItem('nmc_loop') === 'true';
-        let currentVolume = parseFloat(localStorage.getItem('nmc_vol')) || 0.5;
-        let editingIndex = -1;
-
-        let mainAudio = new Audio();
-        let fadeAudio = new Audio();
-        let activeAudio = mainAudio;
-
-        let isDraggingProgress = false;
-        let animationFrameId;
-        let fadeIntervalId = null;
-        let visualAnimId = null;
-
-        // Audio context source tracking
-        let mainAudioConnected = false;
-        let fadeAudioConnected = false;
-
-        const mainTitle = document.getElementById('main-title');
-        const mainTime = document.getElementById('main-time');
-        const currTimeTxt = document.getElementById('curr-time-txt');
-        const totalTimeTxt = document.getElementById('total-time-txt');
-        const seekSlider = document.getElementById('seek-slider');
-        const playlistContainer = document.getElementById('playlist-container');
-        const visualizerEl = document.getElementById('visualizer');
-        const ledContainer = document.getElementById('led-bars');
-        const volPercent = document.getElementById('vol-percent');
-        const btnLoop = document.getElementById('btn-loop');
-        const sysVolBadge = document.getElementById('sys-vol-badge');
-
-        // ========== INIT ==========
-        async function init() {
-            await openDB();
-            createVisualBars(50);
-            createLedBars(20);
-
-            if (isLooping) btnLoop.classList.add('active-loop');
-            activeAudio.volume = currentVolume;
-            updateLedVisual(currentVolume * 100);
-            volPercent.innerText = Math.round(currentVolume * 100);
-
-            // Restore auto-rotate state
-            if (localStorage.getItem('nmc_rotate') === 'true') {
-                autoRotateEnabled = true;
-                btnRotate.classList.add('active-rotate');
-                rotateStatus.className = 'rotate-status on';
-                rotateStatus.innerText = 'ON';
-                if (hasOrientationAPI()) {
-                    screen.orientation.unlock().catch(() => {});
-                }
-            }
-
-            // Connect audio on first user interaction
-            const initInteraction = () => {
-                connectAudioToContext(mainAudio);
-                connectAudioToContext(fadeAudio);
-                mainAudioConnected = true;
-                fadeAudioConnected = true;
-                document.removeEventListener('click', initInteraction);
-                document.removeEventListener('touchstart', initInteraction);
-            };
-            document.addEventListener('click', initInteraction);
-            document.addEventListener('touchstart', initInteraction);
-
-            renderPlaylist();
-            setupEventListeners();
-            setupCustomVolumeDrag();
-            initCircularVisualizer();
+    });
+    seekSlider.addEventListener('input', (e) => {
+        if (audio.duration) {
+            audio.currentTime = (e.target.value / 100) * audio.duration;
         }
+    });
 
-        // ========== VISUALIZER ==========
-        function createVisualBars(count) {
-            visualizerEl.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'visual-bar';
-                bar.style.height = '2px';
-                visualizerEl.appendChild(bar);
-            }
+    // Upload modal
+    const modal = document.getElementById('upload-modal');
+    const uploadBtn = document.getElementById('upload-btn');
+    const closeModal = document.getElementById('close-modal');
+    const confirmUpload = document.getElementById('confirm-upload');
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const fileInput = document.getElementById('file-input');
+    let selectedFile = null;
+
+    uploadBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+    });
+    closeModal.addEventListener('click', () => {
+        modal.style.display = 'none';
+        selectedFile = null;
+    });
+    fileUploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) selectedFile = e.target.files[0];
+    });
+    confirmUpload.addEventListener('click', () => {
+        if (!selectedFile) { showToast("Chọn file MP3"); return; }
+        const customName = document.getElementById('song-title-input').value.trim();
+        let songName = customName || selectedFile.name.replace('.mp3', '').replace('.mpeg', '');
+        const url = URL.createObjectURL(selectedFile);
+        playlist.push({ name: songName, url: url });
+        if (playlist.length === 1) {
+            currentIndex = 0;
+            loadSong(0);
+        } else {
+            updatePlaylistUI();
         }
-
-        // Smooth visualizer with sine wave simulation
-        let visualPhase = 0;
-        function startVisualAnimation() {
-            if (visualAnimId) cancelAnimationFrame(visualAnimId);
-            
-            const bars = document.querySelectorAll('.visual-bar');
-            const barCount = bars.length;
-            let lastTime = performance.now();
-
-            function animate(time) {
-                if (!isPlaying) {
-                    bars.forEach(bar => {
-                        bar.style.height = '2px';
-                        bar.style.opacity = '0.2';
-                    });
-                    return;
-                }
-
-                const dt = (time - lastTime) / 1000;
-                lastTime = time;
-                visualPhase += dt * 3;
-
-                bars.forEach((bar, i) => {
-                    const center = barCount / 2;
-                    const distFromCenter = Math.abs(i - center) / center;
-                    
-                    // Multiple sine waves for organic feel
-                    const wave1 = Math.sin(visualPhase * 2 + i * 0.3) * 0.3;
-                    const wave2 = Math.sin(visualPhase * 3.5 + i * 0.15) * 0.2;
-                    const wave3 = Math.sin(visualPhase * 1.2 + i * 0.5) * 0.25;
-                    const wave4 = Math.cos(visualPhase * 4 + i * 0.08) * 0.15;
-                    
-                    let h = (0.15 + wave1 + wave2 + wave3 + wave4) * (1 - distFromCenter * 0.6);
-                    h = Math.max(0.03, Math.min(1, h)) * 100;
-                    
-                    // Random sparkle
-                    if (Math.random() < 0.02) h = Math.min(100, h + Math.random() * 30);
-
-                    bar.style.height = h + '%';
-
-                    // Color gradient based on height
-                    if (h > 80) {
-                        bar.style.background = 'linear-gradient(to top, #ff0055, #ff3377, #ff6b9d)';
-                        bar.style.boxShadow = '0 0 12px rgba(255,0,85,0.6)';
-                    } else if (h > 60) {
-                        bar.style.background = 'linear-gradient(to top, #ff0055, #ff3377)';
-                        bar.style.boxShadow = '0 0 6px rgba(255,0,85,0.3)';
-                    } else if (h > 35) {
-                        bar.style.background = 'linear-gradient(to top, #ff005588, #ff005544)';
-                        bar.style.boxShadow = 'none';
-                    } else {
-                        bar.style.background = 'linear-gradient(to top, rgba(255,0,85,0.2), transparent)';
-                        bar.style.boxShadow = 'none';
-                    }
-                    
-                    bar.style.opacity = h > 10 ? '1' : '0.4';
-                });
-
-                visualAnimId = requestAnimationFrame(animate);
-            }
-            
-            visualAnimId = requestAnimationFrame(animate);
+        modal.style.display = 'none';
+        selectedFile = null;
+        document.getElementById('song-title-input').value = '';
+        fileInput.value = '';
+        showToast(`Đã thêm: ${songName}`);
+        if (!isPlaying && playlist.length > 0 && currentIndex === 0 && audio.src) {
+            // auto play not forced
         }
+    });
 
-        function stopVisualAnimation() {
-            if (visualAnimId) { cancelAnimationFrame(visualAnimId); visualAnimId = null; }
-            document.querySelectorAll('.visual-bar').forEach(bar => {
-                bar.style.height = '2px'; bar.style.opacity = '0.2';
-                bar.style.boxShadow = 'none';
-                bar.style.background = 'linear-gradient(to top, rgba(255,0,85,0.1), transparent)';
-            });
-        }
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
 
-        // Circular visualizer (subtle ring effect)
-        let ringCanvas, ringCtx, ringAnimId;
-        function initCircularVisualizer() {
-            const ringEl = document.getElementById('visual-ring');
-            ringCanvas = document.createElement('canvas');
-            ringCanvas.width = 200; ringCanvas.height = 200;
-            ringEl.appendChild(ringCanvas);
-            ringCtx = ringCanvas.getContext('2d');
-        }
-
-        function startRingAnimation() {
-            if (ringAnimId) cancelAnimationFrame(ringAnimId);
-            
-            let phase = 0;
-            function draw() {
-                if (!isPlaying) {
-                    ringCtx.clearRect(0, 0, 200, 200);
-                    return;
-                }
-                
-                ringCtx.clearRect(0, 0, 200, 200);
-                const cx = 100, cy = 100, r = 70;
-                const segments = 64;
-                
-                phase += 0.03;
-                
-                for (let i = 0; i < segments; i++) {
-                    const angle = (i / segments) * Math.PI * 2;
-                    const wave = Math.sin(phase * 2 + i * 0.4) * 8 + Math.sin(phase * 3 + i * 0.2) * 5;
-                    const outerR = r + wave + 5;
-                    const innerR = r - 2;
-                    
-                    const x1 = cx + Math.cos(angle) * innerR;
-                    const y1 = cy + Math.sin(angle) * innerR;
-                    const x2 = cx + Math.cos(angle) * outerR;
-                    const y2 = cy + Math.sin(angle) * outerR;
-                    
-                    ringCtx.beginPath();
-                    ringCtx.moveTo(x1, y1);
-                    ringCtx.lineTo(x2, y2);
-                    ringCtx.strokeStyle = `rgba(255, 0, 85, ${0.1 + Math.abs(wave) / 20})`;
-                    ringCtx.lineWidth = 2;
-                    ringCtx.stroke();
-                }
-                
-                ringAnimId = requestAnimationFrame(draw);
-            }
-            draw();
-        }
-
-        function createLedBars(count) {
-            ledContainer.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'led-bar';
-                ledContainer.appendChild(bar);
-            }
-        }
-
-        function updateLedVisual(vol) {
-            const bars = document.querySelectorAll('.led-bar');
-            const numLit = Math.ceil((vol / 100) * bars.length);
-            bars.forEach((bar, index) => {
-                bar.classList.remove('active');
-                if (index < numLit) {
-                    const pct = (index / bars.length) * 100;
-                    if (pct < 50) {
-                        bar.style.backgroundColor = 'var(--led-low)';
-                        bar.style.color = 'var(--led-low)';
-                        bar.style.boxShadow = '0 0 8px rgba(0, 230, 118, 0.5)';
-                    } else if (pct < 80) {
-                        bar.style.backgroundColor = 'var(--led-mid)';
-                        bar.style.color = 'var(--led-mid)';
-                        bar.style.boxShadow = '0 0 8px rgba(255, 234, 0, 0.5)';
-                    } else {
-                        bar.style.backgroundColor = 'var(--led-high)';
-                        bar.style.color = 'var(--led-high)';
-                        bar.style.boxShadow = '0 0 10px rgba(255, 23, 68, 0.6)';
-                    }
-                    bar.classList.add('active');
-                } else {
-                    bar.style.backgroundColor = 'var(--led-off)';
-                    bar.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.6)';
-                }
-            });
-        }
-
-        // ========== PLAYBACK LOGIC ==========
-        async function playSongAtIndex(index) {
-            if (index < 0 || index >= songs.length) return;
-            let song = songs[index];
-
-            if (!song.url || !song.url.startsWith('blob:')) {
-                const arrayBuffer = await getAudioData(song.id);
-                if (arrayBuffer) {
-                    const blob = new Blob([arrayBuffer], { type: song.fileType || 'audio/mpeg' });
-                    song.url = URL.createObjectURL(blob);
-                    saveSongs(songs);
-                } else {
-                    showToast('⚠️ File nhạc không còn tồn tại');
-                    return;
-                }
-            }
-
-            if (index === currentIndex && isPlaying) { togglePlay(); return; }
-
-            let outgoing = (isPlaying && activeAudio && activeAudio.currentTime > 0) ? activeAudio : null;
-            let incoming = (activeAudio === mainAudio) ? fadeAudio : mainAudio;
-
-            currentIndex = index;
-            renderPlaylist();
-            loadSongUI(song);
-            stopAllFades();
-
-            // Connect to audio context
-            if (audioContext && incoming === mainAudio && !mainAudioConnected) {
-                connectAudioToContext(mainAudio);
-                mainAudioConnected = true;
-            }
-            if (audioContext && incoming === fadeAudio && !fadeAudioConnected) {
-                connectAudioToContext(fadeAudio);
-                fadeAudioConnected = true;
-            }
-
-            if (outgoing) {
-                let outVol = outgoing.volume;
-                incoming.src = song.url;
-                incoming.currentTime = song.start;
-                incoming.volume = 0;
-
-                incoming.play().then(() => {
-                    isPlaying = true;
-                    document.getElementById('btn-play').innerText = 'PAUSE';
-                    startPlaybackLoop();
-                    startVisualAnimation();
-                    startRingAnimation();
-
-                    fadeIntervalId = setInterval(() => {
-                        let finishedOut = false, finishedIn = false;
-                        if (outgoing && outVol > 0) {
-                            outVol -= 0.02;
-                            if (outVol <= 0) {
-                                outgoing.volume = 0; outgoing.pause(); outgoing.currentTime = 0;
-                                finishedOut = true;
-                            } else { outgoing.volume = outVol; }
-                        } else { finishedOut = true; }
-
-                        if (incoming.volume < currentVolume) {
-                            incoming.volume = Math.min(incoming.volume + 0.02, currentVolume);
-                        } else {
-                            incoming.volume = currentVolume; finishedIn = true;
-                        }
-
-                        if (finishedOut && finishedIn) {
-                            clearInterval(fadeIntervalId); fadeIntervalId = null;
-                            activeAudio = incoming;
-                        }
-                    }, 20);
-                }).catch(err => console.error("Lỗi phát nhạc:", err));
-            } else {
-                startIncomingSong(incoming, song);
-            }
-        }
-
-        function startIncomingSong(audioObj, song) {
-            activeAudio = audioObj;
-            audioObj.src = song.url;
-            audioObj.currentTime = song.start;
-            audioObj.volume = 0;
-
-            audioObj.play().then(() => {
-                isPlaying = true;
-                document.getElementById('btn-play').innerText = 'PAUSE';
-                stopAllFades();
-                let inVol = 0;
-
-                fadeIntervalId = setInterval(() => {
-                    if (inVol < currentVolume) {
-                        inVol += 0.02;
-                        audioObj.volume = Math.min(inVol, currentVolume);
-                    } else {
-                        audioObj.volume = currentVolume;
-                        clearInterval(fadeIntervalId); fadeIntervalId = null;
-                    }
-                }, 20);
-
-                startPlaybackLoop();
-                startVisualAnimation();
-                startRingAnimation();
-            }).catch(err => console.error("Lỗi phát nhạc:", err));
-        }
-
-        function startPlaybackLoop() {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            function loop() {
-                if (!isDraggingProgress && isPlaying && songs[currentIndex]) {
-                    let cur = activeAudio.currentTime;
-                    let song = songs[currentIndex];
-                    if (cur >= song.end) {
-                        if (isLooping) activeAudio.currentTime = song.start;
-                        else { playSongAtIndex((currentIndex + 1) % songs.length); return; }
-                    }
-                    updateTimeDisplay();
-                }
-                animationFrameId = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // Seek
-        seekSlider.addEventListener('mousedown', () => isDraggingProgress = true);
-        seekSlider.addEventListener('touchstart', () => isDraggingProgress = true);
-        seekSlider.addEventListener('input', (e) => { handleSeekChange(e.target.value); updateTimeDisplay(true); });
-        seekSlider.addEventListener('mouseup', finishSeek);
-        seekSlider.addEventListener('touchend', finishSeek);
-
-        function handleSeekChange(value) {
-            let targetTime = parseFloat(value);
-            if (!songs[currentIndex]) return;
-            let diff = targetTime - activeAudio.currentTime;
-            if (isDraggingProgress && Math.abs(diff) > 2) activeAudio.playbackRate = 3.0;
-            else activeAudio.playbackRate = 1.0;
-        }
-        function finishSeek() {
-            isDraggingProgress = false;
-            activeAudio.currentTime = parseFloat(seekSlider.value);
-            activeAudio.playbackRate = 1.0;
-            updateTimeDisplay();
-        }
-
-        function loadSongUI(song) {
-            mainTitle.innerText = song.name;
-            seekSlider.min = song.start;
-            seekSlider.max = song.end;
-            seekSlider.value = activeAudio.currentTime || song.start;
-            updateTimeDisplay();
-        }
-
-        function updateTimeDisplay(isManual = false) {
-            let song = songs[currentIndex]; if (!song) return;
-            let cur = isManual ? parseFloat(seekSlider.value) : activeAudio.currentTime;
-            let remaining = song.end - cur;
-            currTimeTxt.innerText = "-" + formatTime(remaining);
-            if (!isDraggingProgress) seekSlider.value = cur;
-            totalTimeTxt.innerText = formatTime(song.end - song.start);
-            mainTime.innerText = `${formatTime(cur)} / ${formatTime(song.end)}`;
-        }
-
-        function formatTime(seconds) {
-            if (!seconds || isNaN(seconds)) return "00:00";
-            let m = Math.floor(seconds / 60);
-            let s = Math.floor(seconds % 60);
-            return `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
-        }
-
-        function stopAllFades() { if (fadeIntervalId) { clearInterval(fadeIntervalId); fadeIntervalId = null; } }
-
-        // ========== PLAYLIST ==========
-        function renderPlaylist() {
-            playlistContainer.innerHTML = '';
-            songs.forEach((song, index) => {
-                const btn = document.createElement('div');
-                btn.className = `song-btn ${index === currentIndex ? 'playing' : ''}`;
-                btn.innerHTML = `<i class="fas fa-cog song-settings-icon" title="Cài đặt"></i><span class="song-name">${song.name}</span>`;
-                btn.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('song-settings-icon')) openSettings(index);
-                    else playSongAtIndex(index);
-                });
-                playlistContainer.appendChild(btn);
-            });
-        }
-
-        // ========== EVENT LISTENERS ==========
-        function setupEventListeners() {
-            document.getElementById('btn-play').addEventListener('click', togglePlay);
-            document.getElementById('btn-next').addEventListener('click', () => playSongAtIndex((currentIndex + 1) % songs.length));
-            document.getElementById('btn-prev').addEventListener('click', () => playSongAtIndex((currentIndex - 1 + songs.length) % songs.length));
-
-            document.getElementById('btn-loop').addEventListener('click', () => {
-                isLooping = !isLooping;
-                localStorage.setItem('nmc_loop', isLooping);
-                btnLoop.classList.toggle('active-loop', isLooping);
-            });
-
-            document.getElementById('btn-add').addEventListener('click', () => {
-                document.getElementById('new-song-name').value = '';
-                document.getElementById('file-input').value = '';
-                document.getElementById('add-modal').style.display = 'flex';
-            });
-
-            document.getElementById('file-input').addEventListener('change', function () {
-                if (this.files && this.files[0]) {
-                    document.getElementById('new-song-name').value = this.files[0].name.replace(/\.[^/.]+$/, "");
-                }
-            });
-
-            document.getElementById('btn-confirm-add').addEventListener('click', () => {
-                let name = document.getElementById('new-song-name').value.trim();
-                let fileInput = document.getElementById('file-input');
-                if (!name || !fileInput.files[0]) return showToast('⚠️ Vui lòng nhập tên và chọn file!');
-
-                let file = fileInput.files[0];
-                let newSong = { id: Date.now(), name, url: null, fileType: file.type, duration: 300, start: 0, end: 300 };
-
-                const reader = new FileReader();
-                reader.onload = async function (e) {
-                    await saveAudioData(newSong.id, e.target.result);
-                    let tempUrl = URL.createObjectURL(file);
-                    let tempAudio = new Audio(tempUrl);
-                    tempAudio.addEventListener('loadedmetadata', () => {
-                        newSong.duration = tempAudio.duration;
-                        newSong.end = tempAudio.duration;
-                        newSong.url = tempUrl;
-                        songs.push(newSong); saveSongs(songs); renderPlaylist();
-                        closeModal('add-modal');
-                        showToast('✅ Đã thêm: ' + name);
-                    });
-                    setTimeout(() => {
-                        if (newSong.duration === 300) {
-                            newSong.url = tempUrl;
-                            songs.push(newSong); saveSongs(songs); renderPlaylist();
-                            closeModal('add-modal');
-                            showToast('✅ Đã thêm: ' + name);
-                        }
-                    }, 2000);
-                };
-                reader.readAsArrayBuffer(file);
-            });
-
-            document.getElementById('btn-save-settings').addEventListener('click', () => {
-                if (editingIndex > -1) {
-                    let s = parseInt(document.getElementById('input-start').value);
-                    let e = parseInt(document.getElementById('input-end').value);
-                    if (s >= 0 && e > s) {
-                        songs[editingIndex].start = s;
-                        songs[editingIndex].end = e;
-                        songs[editingIndex].duration = e - s;
-                        saveSongs(songs);
-                        if (currentIndex === editingIndex) loadSongUI(songs[currentIndex]);
-                        closeModal('settings-modal');
-                        showToast('✅ Đã lưu cài đặt');
-                    } else showToast('⚠️ Thời gian không hợp lệ!');
-                }
-            });
-
-            document.getElementById('btn-delete-song').addEventListener('click', async () => {
-                if (confirm("Xóa bài này?")) {
-                    await deleteAudioData(songs[editingIndex].id);
-                    songs.splice(editingIndex, 1); saveSongs(songs);
-                    if (currentIndex === editingIndex) {
-                        activeAudio.pause(); activeAudio.currentTime = 0; activeAudio.src = "";
-                        currentIndex = -1; isPlaying = false;
-                        mainTitle.innerText = "Chưa chọn bài";
-                        stopVisualAnimation();
-                        document.getElementById('btn-play').innerText = 'PLAY';
-                    } else if (currentIndex > editingIndex) {
-                        currentIndex--;
-                    }
-                    renderPlaylist();
-                    closeModal('settings-modal');
-                    showToast('🗑️ Đã xóa bài hát');
-                }
-            });
-
-            // Rotate button
-            btnRotate.addEventListener('click', toggleAutoRotate);
-
-            // System volume link toggle
-            sysVolBadge.addEventListener('click', () => {
-                systemVolumeLinked = !systemVolumeLinked;
-                sysVolBadge.className = 'sys-vol-badge ' + (systemVolumeLinked ? 'linked' : 'unlinked');
-                sysVolBadge.innerHTML = systemVolumeLinked
-                    ? '<i class="fas fa-link"></i> SYNC'
-                    : '<i class="fas fa-unlink"></i> APP';
-                showToast(systemVolumeLinked ? '🔗 Âm lượng đồng bộ hệ thống' : '🔗 Âm lượng chỉ trong app');
-                localStorage.setItem('nmc_vol_sync', systemVolumeLinked);
-            });
-
-            // Restore volume sync preference
-            if (localStorage.getItem('nmc_vol_sync') === 'false') {
-                systemVolumeLinked = false;
-                sysVolBadge.className = 'sys-vol-badge unlinked';
-                sysVolBadge.innerHTML = '<i class="fas fa-unlink"></i> APP';
-            }
-        }
-
-        // ========== VOLUME CONTROL ==========
-        function setupCustomVolumeDrag() {
-            const volArea = document.getElementById('vol-area');
-            let isDraggingVol = false;
-
-            function calculateVolume(e) {
-                let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                let rect = volArea.getBoundingClientRect();
-                let y = clientY - rect.top;
-                let vol = 1 - (y / rect.height);
-                vol = Math.max(0, Math.min(1, vol));
-                currentVolume = vol;
-                activeAudio.volume = vol;
-                localStorage.setItem('nmc_vol', vol);
-                updateLedVisual(vol * 100);
-                volPercent.innerText = Math.round(vol * 100);
-
-                // Update system volume via GainNode
-                if (systemVolumeLinked) {
-                    updateSystemVolume(vol);
-                }
-            }
-
-            volArea.addEventListener('mousedown', (e) => { isDraggingVol = true; calculateVolume(e); });
-            window.addEventListener('mousemove', (e) => { if (isDraggingVol) calculateVolume(e); });
-            window.addEventListener('mouseup', () => { isDraggingVol = false; });
-            volArea.addEventListener('touchstart', (e) => { isDraggingVol = true; calculateVolume(e); }, { passive: true });
-            window.addEventListener('touchmove', (e) => { if (isDraggingVol) calculateVolume(e); }, { passive: true });
-            window.addEventListener('touchend', () => { isDraggingVol = false; });
-
-            // Keyboard volume control
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    currentVolume = Math.min(1, currentVolume + 0.05);
-                    applyVolume();
-                } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    currentVolume = Math.max(0, currentVolume - 0.05);
-                    applyVolume();
-                } else if (e.key === ' ') {
-                    e.preventDefault();
-                    togglePlay();
-                }
-            });
-        }
-
-        function applyVolume() {
-            activeAudio.volume = currentVolume;
-            updateLedVisual(currentVolume * 100);
-            volPercent.innerText = Math.round(currentVolume * 100);
-            localStorage.setItem('nmc_vol', currentVolume);
-            if (systemVolumeLinked) updateSystemVolume(currentVolume);
-        }
-
-        function togglePlay() {
-            if (currentIndex === -1 && songs.length > 0) { playSongAtIndex(0); return; }
-            if (isPlaying) {
-                activeAudio.pause();
-                isPlaying = false;
-                document.getElementById('btn-play').innerText = 'PLAY';
-                stopVisualAnimation();
-            } else {
-                activeAudio.play();
-                isPlaying = true;
-                document.getElementById('btn-play').innerText = 'PAUSE';
-                startPlaybackLoop();
-                startVisualAnimation();
-                startRingAnimation();
-            }
-        }
-
-        function openSettings(index) {
-            editingIndex = index;
-            const song = songs[index];
-            document.getElementById('modal-song-name').innerText = song.name;
-            document.getElementById('input-start').value = song.start;
-            document.getElementById('input-end').value = song.end;
-            document.getElementById('settings-modal').style.display = 'flex';
-        }
-
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        // ========== START ==========
-        init();
-    </script>
+    // Init demo songs (optional)
+    function addDemoSong(name, url) {
+        playlist.push({ name, url });
+    }
+    // Demo silent track? To avoid empty, we add a sample but not required.
+    // For better experience, we provide a default ambient? Not needed.
+    updatePlaylistUI();
+    setVolume(0.5);
+</script>
 </body>
 </html>
