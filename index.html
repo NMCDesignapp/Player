@@ -288,7 +288,7 @@
             50% { box-shadow: 0 0 35px rgba(255, 0, 85, 0.6); }
         }
 
-        /* BOTTOM AREA - playlist + volume sidebar (remove rotate) */
+        /* BOTTOM AREA - playlist + volume sidebar (no rotate) */
         .bottom-area {
             height: 32vh;
             display: flex;
@@ -364,7 +364,7 @@
             width: 100%;
         }
 
-        /* VOLUME SIDEBAR - pushed to the right edge */
+        /* VOLUME SIDEBAR - pushed to the right */
         .volume-sidebar {
             background: #12121a;
             border-radius: 16px;
@@ -446,10 +446,6 @@
             text-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
             pointer-events: none;
             margin-top: 2px;
-        }
-
-        #vol-slider {
-            display: none;
         }
 
         .toast {
@@ -566,7 +562,6 @@
 <body>
 
 <div class="app-container">
-    <!-- Main Screen -->
     <div class="main-screen">
         <div class="signature">NMC<span> PRO</span></div>
         <div class="top-info">
@@ -574,13 +569,11 @@
             <div class="song-time-display" id="current-time-display">0:00 / 0:00</div>
         </div>
 
-        <!-- Visualizer bars -->
         <div class="visual-full" id="visualizerBars"></div>
         <div class="visual-ring">
             <canvas id="ringCanvas" width="160" height="160"></canvas>
         </div>
 
-        <!-- Controls overlay -->
         <div class="controls-area">
             <div class="progress-wrapper">
                 <span class="progress-time" id="current-time">0:00</span>
@@ -597,7 +590,6 @@
         </div>
     </div>
 
-    <!-- Bottom: Playlist + Volume Sidebar (removed rotate) -->
     <div class="bottom-area">
         <div class="playlist-container" id="playlist-container"></div>
         <div class="volume-sidebar" id="volume-sidebar">
@@ -611,12 +603,11 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- Modal upload -->
 <div id="upload-modal" class="modal">
     <div class="modal-content">
         <h3>THÊM NHẠC</h3>
         <div class="file-upload" id="file-upload-area">
-            <i class="fas fa-cloud-upload-alt"></i> Chọn file MP3
+            <i class="fas fa-cloud-upload-alt"></i> Chọn file âm thanh
         </div>
         <div class="input-group">
             <label>Tên hiển thị (tùy chọn)</label>
@@ -626,7 +617,7 @@
             <button class="btn-modal cancel" id="close-modal">Hủy</button>
             <button class="btn-modal" id="confirm-upload">Thêm</button>
         </div>
-        <input type="file" id="file-input" accept="audio/mp3,audio/mpeg">
+        <input type="file" id="file-input" accept="audio/*">
     </div>
 </div>
 
@@ -635,7 +626,7 @@
     let playlist = [];
     let currentIndex = 0;
     let isPlaying = false;
-    let loopMode = false;   // false = normal, true = loop one
+    let loopMode = false;
     let audio = new Audio();
     let analyser = null;
     let sourceNode = null;
@@ -644,9 +635,8 @@
     let ringCtx = null;
     let barsArray = [];
 
-    // Volume handling
-    let systemVolumeLinked = true;       // follow system volume (0-1)
-    let currentVolume = 0.5;             // 0..1
+    let systemVolumeLinked = true;
+    let currentVolume = 0.5;
 
     // DOM elements
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -662,12 +652,10 @@
     const ledContainer = document.getElementById('led-container');
     const sysVolBadge = document.getElementById('sys-vol-badge');
 
-    // Visualizer elements
     const visualizerDiv = document.getElementById('visualizerBars');
     const ringCanvas = document.getElementById('ringCanvas');
     ringCtx = ringCanvas.getContext('2d');
 
-    // Create 32 bars
     for (let i = 0; i < 32; i++) {
         const bar = document.createElement('div');
         bar.classList.add('visual-bar');
@@ -675,27 +663,23 @@
         barsArray.push(bar);
     }
 
-    // Helper: update volume display & LED
     function updateVolumeUI() {
         let vol = currentVolume;
         volPercentSpan.innerText = Math.round(vol * 100) + '%';
-        // update LED bars (10 LEDs)
         const ledCount = 10;
         const activeCount = Math.floor(vol * ledCount);
         const ledBars = document.querySelectorAll('.led-bar');
         ledBars.forEach((led, idx) => {
-            const isActive = idx < activeCount;
-            if (isActive) {
+            if (idx < activeCount) {
                 led.classList.add('active');
-                if (vol <= 0.33) led.style.backgroundColor = 'var(--led-low)';
-                else if (vol <= 0.66) led.style.backgroundColor = 'var(--led-mid)';
-                else led.style.backgroundColor = 'var(--led-high)';
+                if (vol <= 0.33) led.style.backgroundColor = '#00e676';
+                else if (vol <= 0.66) led.style.backgroundColor = '#ffea00';
+                else led.style.backgroundColor = '#ff1744';
             } else {
                 led.classList.remove('active');
                 led.style.backgroundColor = '#1a1a1a';
             }
         });
-        // update system link badge
         if (systemVolumeLinked) {
             sysVolBadge.className = 'sys-vol-badge linked';
             sysVolBadge.innerHTML = '<i class="fas fa-link"></i> SYSTEM LINK';
@@ -705,7 +689,6 @@
         }
     }
 
-    // Build LED bars
     function buildLEDs() {
         ledContainer.innerHTML = '';
         for (let i = 0; i < 10; i++) {
@@ -717,7 +700,6 @@
     }
     buildLEDs();
 
-    // Actually set audio volume
     function setVolume(vol) {
         vol = Math.min(1, Math.max(0, vol));
         currentVolume = vol;
@@ -725,33 +707,19 @@
         updateVolumeUI();
     }
 
-    // Toggle system link
-    sysVolBadge.addEventListener('click', (e) => {
+    sysVolBadge.addEventListener('click', () => {
         systemVolumeLinked = !systemVolumeLinked;
-        if (systemVolumeLinked) {
-            // Fetch actual system volume? We'll use a trick: create a gain? But browser can't read real system volume.
-            // We simulate "linked" means it follows the browser's audio element volume? Actually we'll just keep currentVolume but badge changes.
-            // In real UX, linking means volume controls affect system? Not possible. We'll just treat as "auto sync" concept but here manual.
-            // For demo, linking just shows status, still use same slider.
-            showToast("Chế độ liên kết hệ thống (giả lập)");
-        } else {
-            showToast("Điều chỉnh thủ công");
-        }
+        showToast(systemVolumeLinked ? "Đã liên kết âm lượng hệ thống" : "Âm lượng thủ công");
         updateVolumeUI();
     });
 
-    // Volume handling via touch/mouse on sidebar
+    // Volume slider via touch/mouse on sidebar
     const volumeSidebar = document.getElementById('volume-sidebar');
     let isDraggingVolume = false;
     function handleVolumeMove(clientY, rect) {
         let yRelative = (rect.bottom - clientY) / rect.height;
         yRelative = Math.min(1, Math.max(0, yRelative));
         setVolume(yRelative);
-        if (!systemVolumeLinked) {
-            // manual mode
-        } else {
-            // if linked, also set (still same)
-        }
     }
     volumeSidebar.addEventListener('mousedown', (e) => {
         isDraggingVolume = true;
@@ -781,7 +749,6 @@
     });
     window.addEventListener('touchend', () => { isDraggingVolume = false; });
 
-    // Setup audio visualizer
     function setupAudioContext() {
         if (audioContext && audioContext.state !== 'closed') return;
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -811,7 +778,6 @@
             barsArray[i].style.backgroundColor = `hsl(${hue}, 100%, 60%)`;
             barsArray[i].style.boxShadow = `0 0 ${val / 40}px #ff0055`;
         }
-        // Ring canvas
         if (ringCtx) {
             ringCtx.clearRect(0, 0, 160, 160);
             let avg = 0;
@@ -838,9 +804,16 @@
     }
     updateVisualizer();
 
-    // Load song
+    function formatTime(sec) {
+        if (isNaN(sec)) return "0:00";
+        let mins = Math.floor(sec / 60);
+        let secs = Math.floor(sec % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
     function loadSong(index) {
         if (!playlist[index]) return;
+        const wasPlaying = isPlaying;
         audio.pause();
         isPlaying = false;
         audio.src = playlist[index].url;
@@ -848,17 +821,16 @@
         audio.load();
         audio.volume = currentVolume;
         if (audioContext && audioContext.state === 'suspended') audioContext.resume();
-        setTimeout(() => {
+        audio.addEventListener('canplaythrough', () => {
             if (audio.duration) durationSpan.innerText = formatTime(audio.duration);
-        }, 200);
+        }, { once: true });
+        if (wasPlaying) {
+            audio.play().then(() => {
+                isPlaying = true;
+                updatePlayPauseUI();
+            }).catch(e => console.log("Play error:", e));
+        }
         updatePlaylistUI();
-    }
-
-    function formatTime(sec) {
-        if (isNaN(sec)) return "0:00";
-        let mins = Math.floor(sec / 60);
-        let secs = Math.floor(sec % 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
     function updatePlaylistUI() {
@@ -867,12 +839,10 @@
             const btn = document.createElement('div');
             btn.classList.add('song-btn');
             if (idx === currentIndex && isPlaying) btn.classList.add('playing');
-            btn.innerHTML = `<div class="song-name">${song.name}</div>`;
+            btn.innerHTML = `<div class="song-name">${escapeHtml(song.name)}</div>`;
             btn.addEventListener('click', () => {
                 if (currentIndex === idx && isPlaying) {
-                    audio.pause();
-                    isPlaying = false;
-                    updatePlayPauseUI();
+                    pauseAudio();
                 } else {
                     currentIndex = idx;
                     loadSong(currentIndex);
@@ -884,13 +854,25 @@
         });
     }
 
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
     function playAudio() {
         if (!playlist.length) return;
         audio.play().then(() => {
             isPlaying = true;
             updatePlayPauseUI();
             updatePlaylistUI();
-        }).catch(e => console.log(e));
+        }).catch(e => {
+            console.error("Playback failed:", e);
+            showToast("Không thể phát định dạng này");
+        });
         if (audioContext && audioContext.state === 'suspended') audioContext.resume();
     }
 
@@ -913,11 +895,9 @@
         }
     }
 
-    // Next / Prev with correct index handling
     function nextSong() {
         if (!playlist.length) return;
         if (loopMode) {
-            // loop current song
             audio.currentTime = 0;
             if (!isPlaying) playAudio();
             else audio.play();
@@ -939,7 +919,6 @@
         playAudio();
     }
 
-    // Event listeners
     playPauseBtn.addEventListener('click', () => {
         if (!playlist.length) { showToast("Hãy thêm nhạc trước"); return; }
         if (isPlaying) pauseAudio();
@@ -999,9 +978,9 @@
         if (e.target.files.length) selectedFile = e.target.files[0];
     });
     confirmUpload.addEventListener('click', () => {
-        if (!selectedFile) { showToast("Chọn file MP3"); return; }
+        if (!selectedFile) { showToast("Chọn file âm thanh"); return; }
         const customName = document.getElementById('song-title-input').value.trim();
-        let songName = customName || selectedFile.name.replace('.mp3', '').replace('.mpeg', '');
+        let songName = customName || selectedFile.name.replace(/\.[^/.]+$/, "");
         const url = URL.createObjectURL(selectedFile);
         playlist.push({ name: songName, url: url });
         if (playlist.length === 1) {
@@ -1015,9 +994,6 @@
         document.getElementById('song-title-input').value = '';
         fileInput.value = '';
         showToast(`Đã thêm: ${songName}`);
-        if (!isPlaying && playlist.length > 0 && currentIndex === 0 && audio.src) {
-            // auto play not forced
-        }
     });
 
     function showToast(msg) {
@@ -1027,14 +1003,8 @@
         setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
-    // Init demo songs (optional)
-    function addDemoSong(name, url) {
-        playlist.push({ name, url });
-    }
-    // Demo silent track? To avoid empty, we add a sample but not required.
-    // For better experience, we provide a default ambient? Not needed.
-    updatePlaylistUI();
     setVolume(0.5);
+    updatePlaylistUI();
 </script>
 </body>
 </html>
