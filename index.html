@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Music Player - NMC Edition</title>
+    <title>Pro Music Player - NMC Edition | Full Visualizer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
@@ -39,10 +39,27 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            position: relative;
+            z-index: 10;
         }
 
+        /* Toàn màn hình visualizer chuyên nghiệp (background động) */
+        .full-viz-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.65;
+            transition: opacity 0.3s ease;
+        }
+
+        /* MÀN HÌNH CHÍNH */
         .main-screen {
-            background: linear-gradient(145deg, #0d0d18 0%, #000005 100%);
+            background: linear-gradient(145deg, rgba(13,13,24,0.6) 0%, rgba(0,0,5,0.6) 100%);
+            backdrop-filter: blur(2px);
             flex: 1;
             border-radius: 20px;
             position: relative;
@@ -52,6 +69,7 @@
             flex-direction: column;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.1);
             min-height: 0;
+            z-index: 2;
         }
 
         .main-screen::before {
@@ -126,6 +144,7 @@
             text-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
         }
 
+        /* Bar visualizer cũ vẫn giữ để tăng hiệu ứng (nhưng sẽ có thêm mới) */
         .visual-full {
             position: absolute;
             top: 70px;
@@ -288,10 +307,12 @@
             height: 32vh;
             display: flex;
             gap: 10px;
+            z-index: 2;
         }
 
         .playlist-container {
-            background: #12121a;
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(12px);
             border-radius: 16px;
             padding: 12px;
             overflow-y: auto;
@@ -359,7 +380,6 @@
             width: 100%;
         }
 
-        /* Nút cài đặt trên mỗi bài hát */
         .song-settings-icon {
             position: absolute;
             top: 4px;
@@ -387,7 +407,8 @@
         }
 
         .volume-sidebar {
-            background: #12121a;
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(12px);
             border-radius: 16px;
             display: flex;
             flex-direction: column;
@@ -588,6 +609,9 @@
 </head>
 <body>
 
+<!-- FULLSCREEN PROFESSIONAL VISUALIZER CANVAS -->
+<canvas id="fullVizCanvas" class="full-viz-canvas"></canvas>
+
 <div class="app-container">
     <div class="main-screen">
         <div class="signature">NMC<span> PRO</span></div>
@@ -649,7 +673,7 @@
     </div>
 </div>
 
-<!-- Modal cài đặt bài hát (xoá, chỉnh thời gian phát) -->
+<!-- Modal cài đặt bài hát -->
 <div id="song-settings-modal" class="modal">
     <div class="modal-content">
         <h3>CÀI ĐẶT BÀI HÁT</h3>
@@ -675,7 +699,7 @@
 
 <script>
     // ---------- DATA ----------
-    let playlist = [];          // mỗi phần tử: { name, url, startTime, endTime }
+    let playlist = [];
     let currentIndex = 0;
     let isPlaying = false;
     let loopMode = false;
@@ -690,8 +714,28 @@
     let systemVolumeLinked = true;
     let currentVolume = 0.5;
 
-    // Biến lưu bài đang chỉnh sửa settings
     let editingSongIndex = -1;
+
+    // FULL VISUALIZER CANVAS
+    const fullCanvas = document.getElementById('fullVizCanvas');
+    let fullCtx = fullCanvas.getContext('2d');
+    let particles = [];
+    let mouseX = 0, mouseY = 0;
+
+    function resizeFullCanvas() {
+        fullCanvas.width = window.innerWidth;
+        fullCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeFullCanvas);
+    resizeFullCanvas();
+
+    class Particle {
+        constructor(x, y, vx, vy, size, color) {
+            this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.size = size; this.color = color; this.alpha = 0.6;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.005; }
+        draw(ctx) { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
+    }
 
     // DOM elements
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -769,7 +813,7 @@
         updateVolumeUI();
     });
 
-    // Volume touch/mouse
+    // Volume sidebar touch/mouse
     const volumeSidebar = document.getElementById('volume-sidebar');
     let isDraggingVolume = false;
     function handleVolumeMove(clientY, rect) {
@@ -805,12 +849,12 @@
     });
     window.addEventListener('touchend', () => { isDraggingVolume = false; });
 
-    // Audio Context & Visualizer
+    // Audio Context
     function setupAudioContext() {
         if (audioContext && audioContext.state !== 'closed') return;
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 64;
+        analyser.fftSize = 128;
         sourceNode = audioContext.createMediaElementSource(audio);
         sourceNode.connect(analyser);
         analyser.connect(audioContext.destination);
@@ -818,79 +862,66 @@
         if (audioContext.state === 'suspended') audioContext.resume();
     }
 
-    function updateVisualizer() {
-        if (!analyser) {
-            if (animationId) cancelAnimationFrame(animationId);
-            animationId = requestAnimationFrame(updateVisualizer);
-            return;
-        }
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(dataArray);
-        const step = Math.floor(dataArray.length / barsArray.length);
-        for (let i = 0; i < barsArray.length; i++) {
-            let val = dataArray[i * step] || 0;
-            let height = (val / 255) * 80 + 4;
-            barsArray[i].style.height = height + 'px';
-            let hue = 320 + (val / 255) * 40;
-            barsArray[i].style.backgroundColor = `hsl(${hue}, 100%, 60%)`;
-            barsArray[i].style.boxShadow = `0 0 ${val / 40}px #ff0055`;
-        }
-        if (ringCtx) {
-            ringCtx.clearRect(0, 0, 160, 160);
-            let avg = 0;
-            for (let i = 0; i < dataArray.length; i++) avg += dataArray[i];
-            avg /= dataArray.length;
-            let radius = 40 + (avg / 255) * 50;
-            ringCtx.beginPath();
-            ringCtx.arc(80, 80, radius, 0, Math.PI * 2);
-            ringCtx.strokeStyle = `rgba(255, 0, 85, ${0.3 + avg / 255 * 0.5})`;
-            ringCtx.lineWidth = 3;
-            ringCtx.stroke();
-            for (let i = 0; i < 12; i++) {
-                let angle = (Date.now() / 300 + i) % (Math.PI * 2);
-                let r = 70 + (avg / 255) * 20;
-                let x = 80 + Math.cos(angle) * r;
-                let y = 80 + Math.sin(angle) * r;
-                ringCtx.fillStyle = `#ff0055`;
-                ringCtx.beginPath();
-                ringCtx.arc(x, y, 3 + avg / 80, 0, 2 * Math.PI);
-                ringCtx.fill();
+    // Fade In/Out function for smooth transition
+    let fadeInterval = null;
+    function fadeVolume(from, to, duration, callback) {
+        if (fadeInterval) clearInterval(fadeInterval);
+        const steps = 20;
+        const stepTime = duration / steps;
+        let step = 0;
+        const diff = to - from;
+        fadeInterval = setInterval(() => {
+            step++;
+            const newVol = from + (diff * (step / steps));
+            audio.volume = Math.min(1, Math.max(0, newVol));
+            if (step >= steps) {
+                clearInterval(fadeInterval);
+                fadeInterval = null;
+                if (callback) callback();
             }
-        }
-        animationId = requestAnimationFrame(updateVisualizer);
-    }
-    updateVisualizer();
-
-    // Helper
-    function formatTime(sec) {
-        if (isNaN(sec) || !isFinite(sec)) return "0:00";
-        let mins = Math.floor(sec / 60);
-        let secs = Math.floor(sec % 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }, stepTime);
     }
 
-    // Kiểm tra và áp dụng startTime/endTime khi phát
-    function enforceSongBounds() {
-        if (!playlist[currentIndex]) return;
-        const song = playlist[currentIndex];
-        const start = song.startTime || 0;
-        const end = song.endTime || 0;
-        if (end > 0 && audio.currentTime >= end) {
-            // Kết thúc đoạn
-            if (loopMode) {
-                audio.currentTime = start;
-                audio.play();
-            } else {
-                nextSong();
+    // Load song with fade out/in
+    function loadSongWithFade(index, autoPlay = true) {
+        if (!playlist[index]) return;
+        const wasPlaying = isPlaying;
+        // Fade out current audio
+        const doLoad = () => {
+            audio.pause();
+            isPlaying = false;
+            const song = playlist[index];
+            audio.src = song.url;
+            songTitleDisplay.innerText = song.name;
+            audio.load();
+            audio.volume = 0;
+            setVolume(currentVolume); // restore target volume after fade in
+            if (autoPlay && (wasPlaying || (playlist.length > 0 && !audio.src))) {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    updatePlayPauseUI();
+                    fadeVolume(0, currentVolume, 300, null);
+                }).catch(e => console.log(e));
             }
-            return;
-        }
-        if (audio.currentTime < start) {
-            audio.currentTime = start;
+            if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+            audio.addEventListener('canplaythrough', () => {
+                if (audio.duration && isFinite(audio.duration)) {
+                    durationSpan.innerText = formatTime(audio.duration);
+                    const start = song.startTime || 0;
+                    if (start > 0 && audio.currentTime < start) audio.currentTime = start;
+                }
+            }, { once: true });
+            updatePlaylistUI();
+        };
+        if (audio.src && audio.readyState > 0 && isPlaying) {
+            fadeVolume(audio.volume, 0, 250, () => {
+                doLoad();
+            });
+        } else {
+            doLoad();
         }
     }
 
-    // Load bài hát
     function loadSong(index) {
         if (!playlist[index]) return;
         const wasPlaying = isPlaying;
@@ -901,27 +932,23 @@
         songTitleDisplay.innerText = song.name;
         audio.load();
         audio.volume = currentVolume;
-        if (audioContext && audioContext.state === 'suspended') audioContext.resume();
-        
-        audio.addEventListener('canplaythrough', () => {
-            if (audio.duration && isFinite(audio.duration)) {
-                durationSpan.innerText = formatTime(audio.duration);
-                // Áp dụng startTime nếu có
-                const start = song.startTime || 0;
-                if (start > 0 && audio.currentTime < start) audio.currentTime = start;
-            }
-        }, { once: true });
-        
         if (wasPlaying) {
             audio.play().then(() => {
                 isPlaying = true;
                 updatePlayPauseUI();
-            }).catch(e => console.log("Play error:", e));
+            }).catch(e => console.log(e));
         }
+        if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+        audio.addEventListener('canplaythrough', () => {
+            if (audio.duration && isFinite(audio.duration)) {
+                durationSpan.innerText = formatTime(audio.duration);
+                const start = song.startTime || 0;
+                if (start > 0 && audio.currentTime < start) audio.currentTime = start;
+            }
+        }, { once: true });
         updatePlaylistUI();
     }
 
-    // Cập nhật danh sách phát (có nút settings)
     function updatePlaylistUI() {
         playlistContainer.innerHTML = '';
         playlist.forEach((song, idx) => {
@@ -929,7 +956,6 @@
             btn.classList.add('song-btn');
             if (idx === currentIndex && isPlaying) btn.classList.add('playing');
             btn.innerHTML = `<div class="song-name">${escapeHtml(song.name)}</div>`;
-            // Thêm nút settings
             const settingsIcon = document.createElement('div');
             settingsIcon.className = 'song-settings-icon';
             settingsIcon.innerHTML = '<i class="fas fa-cog"></i>';
@@ -943,8 +969,7 @@
                     pauseAudio();
                 } else {
                     currentIndex = idx;
-                    loadSong(currentIndex);
-                    playAudio();
+                    loadSongWithFade(currentIndex, true);
                 }
                 updatePlaylistUI();
             });
@@ -970,10 +995,7 @@
             isPlaying = true;
             updatePlayPauseUI();
             updatePlaylistUI();
-        }).catch(e => {
-            console.error("Playback failed:", e);
-            showToast("Không thể phát định dạng này");
-        });
+        }).catch(e => console.log(e));
         if (audioContext && audioContext.state === 'suspended') audioContext.resume();
     }
 
@@ -1009,8 +1031,7 @@
         let newIndex = currentIndex + 1;
         if (newIndex >= playlist.length) newIndex = 0;
         currentIndex = newIndex;
-        loadSong(currentIndex);
-        playAudio();
+        loadSongWithFade(currentIndex, true);
     }
 
     function prevSong() {
@@ -1018,11 +1039,26 @@
         let newIndex = currentIndex - 1;
         if (newIndex < 0) newIndex = playlist.length - 1;
         currentIndex = newIndex;
-        loadSong(currentIndex);
-        playAudio();
+        loadSongWithFade(currentIndex, true);
     }
 
-    // Mở modal settings cho bài hát
+    function enforceSongBounds() {
+        if (!playlist[currentIndex]) return;
+        const song = playlist[currentIndex];
+        const start = song.startTime || 0;
+        const end = song.endTime || 0;
+        if (end > 0 && audio.currentTime >= end) {
+            if (loopMode) {
+                audio.currentTime = start;
+                audio.play();
+            } else {
+                nextSong();
+            }
+            return;
+        }
+        if (audio.currentTime < start) audio.currentTime = start;
+    }
+
     function openSongSettings(index) {
         editingSongIndex = index;
         const song = playlist[index];
@@ -1032,7 +1068,6 @@
         document.getElementById('song-settings-modal').style.display = 'flex';
     }
 
-    // Lưu settings
     function saveSongSettings() {
         if (editingSongIndex === -1) return;
         const song = playlist[editingSongIndex];
@@ -1042,24 +1077,17 @@
         if (isNaN(end)) end = 0;
         if (end < 0) end = 0;
         if (start < 0) start = 0;
-        // Nếu end >0 và end <= start thì vô lý, có thể set end=0
         if (end > 0 && end <= start) {
-            showToast("Thời gian kết thúc phải lớn hơn bắt đầu, đã đặt lại = 0");
+            showToast("Kết thúc phải lớn hơn bắt đầu, đã đặt lại = 0");
             end = 0;
         }
         song.startTime = start;
         song.endTime = end;
-        // Nếu bài đang phát, áp dụng ngay
         if (editingSongIndex === currentIndex && audio.src) {
             if (audio.currentTime < start) audio.currentTime = start;
-            // Nếu đang quá end thì dừng
             if (end > 0 && audio.currentTime >= end) {
-                if (loopMode) {
-                    audio.currentTime = start;
-                    audio.play();
-                } else {
-                    nextSong();
-                }
+                if (loopMode) audio.currentTime = start;
+                else nextSong();
             }
         }
         showToast(`Đã lưu cài đặt cho "${song.name}"`);
@@ -1067,7 +1095,6 @@
         editingSongIndex = -1;
     }
 
-    // Xoá bài hát
     function deleteCurrentSong() {
         if (editingSongIndex === -1) return;
         const removed = playlist.splice(editingSongIndex, 1)[0];
@@ -1082,7 +1109,7 @@
             if (editingSongIndex < currentIndex) currentIndex--;
             else if (editingSongIndex === currentIndex) {
                 if (currentIndex >= playlist.length) currentIndex = playlist.length - 1;
-                if (currentIndex >= 0) loadSong(currentIndex);
+                if (currentIndex >= 0) loadSongWithFade(currentIndex, true);
                 else { audio.pause(); isPlaying = false; }
             }
         }
@@ -1091,7 +1118,7 @@
         updatePlaylistUI();
     }
 
-    // Sự kiện controls
+    // Event listeners
     playPauseBtn.addEventListener('click', () => {
         if (!playlist.length) { showToast("Hãy thêm nhạc trước"); return; }
         if (isPlaying) pauseAudio();
@@ -1112,7 +1139,6 @@
             seekSlider.value = percent;
             currentTimeSpan.innerText = formatTime(audio.currentTime);
             document.getElementById('current-time-display').innerHTML = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
-            // Kiểm tra bounds
             enforceSongBounds();
         }
     });
@@ -1168,7 +1194,7 @@
         playlist.push({ name: songName, url: url, startTime: 0, endTime: 0 });
         if (playlist.length === 1) {
             currentIndex = 0;
-            loadSong(0);
+            loadSongWithFade(0, true);
         } else {
             updatePlaylistUI();
         }
@@ -1179,7 +1205,7 @@
         showToast(`Đã thêm: ${songName}`);
     });
 
-    // Modal settings events
+    // Settings modal events
     const settingsModal = document.getElementById('song-settings-modal');
     const closeSettings = document.getElementById('close-settings-modal');
     const saveSettings = document.getElementById('save-settings-btn');
@@ -1191,6 +1217,71 @@
     saveSettings.addEventListener('click', saveSongSettings);
     deleteBtn.addEventListener('click', deleteCurrentSong);
 
+    // FULLSCREEN PROFESSIONAL VISUALIZER (spectrum wave + particles)
+    let freqData = new Uint8Array(64);
+    function drawFullVisualizer() {
+        if (!analyser) {
+            requestAnimationFrame(drawFullVisualizer);
+            return;
+        }
+        analyser.getByteFrequencyData(freqData);
+        fullCtx.clearRect(0, 0, fullCanvas.width, fullCanvas.height);
+        // Gradient background
+        let gradient = fullCtx.createLinearGradient(0, 0, fullCanvas.width, fullCanvas.height);
+        gradient.addColorStop(0, 'rgba(10, 10, 20, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+        fullCtx.fillStyle = gradient;
+        fullCtx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+        
+        // Draw circular spectrum bars around center
+        const centerX = fullCanvas.width / 2;
+        const centerY = fullCanvas.height / 2;
+        const maxRadius = Math.min(fullCanvas.width, fullCanvas.height) * 0.4;
+        for (let i = 0; i < 64; i++) {
+            let val = freqData[i] / 255;
+            let barHeight = 10 + val * 80;
+            let angle = (i / 64) * Math.PI * 2;
+            let rad = maxRadius + barHeight * 0.6;
+            let x1 = centerX + Math.cos(angle) * (maxRadius - 8);
+            let y1 = centerY + Math.sin(angle) * (maxRadius - 8);
+            let x2 = centerX + Math.cos(angle) * rad;
+            let y2 = centerY + Math.sin(angle) * rad;
+            fullCtx.beginPath();
+            fullCtx.moveTo(x1, y1);
+            fullCtx.lineTo(x2, y2);
+            fullCtx.lineWidth = 4;
+            fullCtx.strokeStyle = `hsl(${320 + val * 80}, 100%, 60%)`;
+            fullCtx.shadowBlur = 12;
+            fullCtx.shadowColor = '#ff0055';
+            fullCtx.stroke();
+        }
+        fullCtx.shadowBlur = 0;
+        
+        // Particles effect
+        if (freqData.reduce((a,b)=>a+b,0) > 200) {
+            for (let i=0; i<3; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let speed = 1 + Math.random() * 3;
+                let size = 2 + Math.random() * 4;
+                particles.push(new Particle(centerX, centerY, Math.cos(angle)*speed, Math.sin(angle)*speed, size, `hsl(${Math.random()*60+300}, 80%, 60%)`));
+            }
+        }
+        for (let i=0; i<particles.length; i++) {
+            particles[i].update();
+            particles[i].draw(fullCtx);
+            if (particles[i].alpha <= 0) particles.splice(i,1);
+        }
+        requestAnimationFrame(drawFullVisualizer);
+    }
+    drawFullVisualizer();
+
+    function formatTime(sec) {
+        if (isNaN(sec) || !isFinite(sec)) return "0:00";
+        let mins = Math.floor(sec / 60);
+        let secs = Math.floor(sec % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
     function showToast(msg) {
         const toast = document.getElementById('toast');
         toast.innerText = msg;
@@ -1200,6 +1291,44 @@
 
     setVolume(0.5);
     updatePlaylistUI();
+    setupAudioContext();
+    // Update bars visualizer
+    function updateBarsVisualizer() {
+        if (!analyser) { requestAnimationFrame(updateBarsVisualizer); return; }
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(data);
+        const step = Math.floor(data.length / barsArray.length);
+        for (let i=0; i<barsArray.length; i++) {
+            let val = data[i*step] || 0;
+            let height = (val/255)*80 + 4;
+            barsArray[i].style.height = height + 'px';
+            barsArray[i].style.backgroundColor = `hsl(${320 + (val/255)*40}, 100%, 60%)`;
+        }
+        if (ringCtx) {
+            ringCtx.clearRect(0,0,160,160);
+            let avg = 0;
+            for (let i=0;i<data.length;i++) avg+=data[i];
+            avg/=data.length;
+            let rad = 40 + (avg/255)*50;
+            ringCtx.beginPath();
+            ringCtx.arc(80,80,rad,0,Math.PI*2);
+            ringCtx.strokeStyle = `rgba(255,0,85,${0.3+avg/500})`;
+            ringCtx.lineWidth=3;
+            ringCtx.stroke();
+            for(let i=0;i<12;i++){
+                let angle = (Date.now()/300+i)%(Math.PI*2);
+                let r=70+(avg/255)*20;
+                let x=80+Math.cos(angle)*r;
+                let y=80+Math.sin(angle)*r;
+                ringCtx.fillStyle='#ff0055';
+                ringCtx.beginPath();
+                ringCtx.arc(x,y,3+avg/80,0,Math.PI*2);
+                ringCtx.fill();
+            }
+        }
+        requestAnimationFrame(updateBarsVisualizer);
+    }
+    updateBarsVisualizer();
 </script>
 </body>
 </html>
