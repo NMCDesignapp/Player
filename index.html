@@ -1076,20 +1076,18 @@ async function togglePinOnTop() {
                     overflow-x: hidden;
                     display: flex;
                     flex-direction: column;
-                    gap: 2px;
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(255,0,85,0.3) transparent;
+                    gap: 3px;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
                 }
-                .list::-webkit-scrollbar { width: 3px; }
-                .list::-webkit-scrollbar-track { background: transparent; }
-                .list::-webkit-scrollbar-thumb { background: rgba(255,0,85,0.3); border-radius: 2px; }
+                .list::-webkit-scrollbar { display: none; }
                 .s {
                     background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,0,85,0.2);
                     color: #ff6b9d;
-                    border-radius: 4px;
-                    padding: 3px 6px;
-                    font-size: 0.52rem;
+                    border-radius: 5px;
+                    padding: 6px 8px;
+                    font-size: 0.65rem;
                     font-weight: 600;
                     cursor: pointer;
                     white-space: nowrap;
@@ -1097,6 +1095,7 @@ async function togglePinOnTop() {
                     text-overflow: ellipsis;
                     transition: all 0.1s;
                     flex-shrink: 0;
+                    line-height: 1.2;
                 }
                 .s:hover { background: rgba(255,0,85,0.1); border-color: rgba(255,0,85,0.5); color: #fff; }
                 .s:active { background: #ff0055; color: #fff; transform: scale(0.96); }
@@ -1105,36 +1104,45 @@ async function togglePinOnTop() {
                     border-color: rgba(255,0,85,0.7);
                     color: #fff;
                     font-family: 'Orbitron',monospace;
-                    font-size: 0.55rem;
-                    cursor: default;
+                    font-size: 0.68rem;
                     text-shadow: 0 0 6px rgba(255,0,85,0.4);
                     box-shadow: 0 0 8px rgba(255,0,85,0.15);
                 }
+                .s.cur.playing::after {
+                    content: ' ▶';
+                    font-size: 0.5rem;
+                }
+                .s.cur.paused::after {
+                    content: ' ❚❚';
+                    font-size: 0.5rem;
+                }
                 .bar {
                     width: 100%;
-                    height: 3px;
+                    height: 6px;
                     background: rgba(255,255,255,0.06);
-                    border-radius: 2px;
+                    border-radius: 3px;
                     overflow: hidden;
                     cursor: pointer;
                     flex-shrink: 0;
+                    margin-top: 2px;
                 }
                 .bf {
                     height: 100%;
                     background: linear-gradient(90deg, #ff0055, #ff3377);
-                    border-radius: 2px;
+                    border-radius: 3px;
                     transition: width 0.2s;
                     width: 0%;
-                    box-shadow: 0 0 4px rgba(255,0,85,0.4);
+                    box-shadow: 0 0 6px rgba(255,0,85,0.4);
                 }
                 .tr {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     flex-shrink: 0;
+                    padding: 1px 0;
                 }
-                .tt { font-family:'Orbitron',monospace; font-size:0.42rem; color:#ff0055; opacity:.85; }
-                .tr2 { font-family:'Orbitron',monospace; font-size:0.42rem; color:#555; }
+                .tt { font-family:'Orbitron',monospace; font-size:0.6rem; color:#ff0055; opacity:.9; }
+                .tr2 { font-family:'Orbitron',monospace; font-size:0.6rem; color:#555; }
             `;
             pipDoc.head.appendChild(styleEl);
 
@@ -1144,12 +1152,19 @@ async function togglePinOnTop() {
                 <div class="tr"><div class="tt" id="pip-time">0:00</div><div class="tr2" id="pip-remain">-0:00</div></div>
             `;
 
-            // Events - click song to play
+            // Events - click song to play; click current to pause/resume
             pipDoc.getElementById('pip-list').addEventListener('click', (e) => {
                 const btn = e.target.closest('.s');
-                if (!btn || btn.classList.contains('cur')) return;
+                if (!btn) return;
                 const idx = parseInt(btn.dataset.i);
-                if (!isNaN(idx) && idx >= 0 && idx < playlist.length) loadSongWithFade(idx, true);
+                if (isNaN(idx) || idx < 0 || idx >= playlist.length) return;
+                if (btn.classList.contains('cur')) {
+                    // Toggle pause/resume on current song
+                    if (isPlaying) { pauseAudio(); }
+                    else { playAudio(); }
+                } else {
+                    loadSongWithFade(idx, true);
+                }
             });
             // Seek bar
             pipDoc.getElementById('pip-bar').addEventListener('click', (e) => {
@@ -1178,7 +1193,15 @@ async function togglePinOnTop() {
                     if (needRebuild) {
                         d.getElementById('pip-list').innerHTML = buildSongList();
                     } else {
-                        items.forEach((it, i) => it.classList.toggle('cur', i === currentIndex));
+                        items.forEach((it, i) => {
+                            it.classList.toggle('cur', i === currentIndex);
+                            if (i === currentIndex) {
+                                it.classList.toggle('playing', isPlaying);
+                                it.classList.toggle('paused', !isPlaying);
+                            } else {
+                                it.classList.remove('playing', 'paused');
+                            }
+                        });
                     }
                     // Scroll current into view
                     const curEl = d.querySelector('.s.cur');
@@ -1221,19 +1244,19 @@ async function togglePinOnTop() {
                 html,body{background:rgba(8,8,14,0.95);font-family:'Inter',system-ui,sans-serif;color:#fff;height:100%;overflow:hidden;user-select:none}
                 body{display:flex;flex-direction:column;padding:4px 6px;gap:3px;border:1.5px solid rgba(255,0,85,.5);box-shadow:0 0 8px rgba(255,0,85,.3),0 0 20px rgba(255,0,85,.1),inset 0 0 8px rgba(255,0,85,.05);animation:lp 2.5s ease-in-out infinite alternate}
                 @keyframes lp{0%{border-color:rgba(255,0,85,.4);box-shadow:0 0 6px rgba(255,0,85,.2),0 0 15px rgba(255,0,85,.08),inset 0 0 6px rgba(255,0,85,.03)}100%{border-color:rgba(255,0,85,.8);box-shadow:0 0 12px rgba(255,0,85,.45),0 0 30px rgba(255,0,85,.15),inset 0 0 12px rgba(255,0,85,.06)}}
-                .list{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:rgba(255,0,85,.3) transparent}
-                .list::-webkit-scrollbar{width:3px}
-                .list::-webkit-scrollbar-track{background:transparent}
-                .list::-webkit-scrollbar-thumb{background:rgba(255,0,85,.3);border-radius:2px}
-                .s{background:rgba(255,255,255,.03);border:1px solid rgba(255,0,85,.2);color:#ff6b9d;border-radius:4px;padding:3px 6px;font-size:.52rem;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .1s;flex-shrink:0}
+                .list{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:3px;scrollbar-width:none;-ms-overflow-style:none}
+                .list::-webkit-scrollbar{display:none}
+                .s{background:rgba(255,255,255,.03);border:1px solid rgba(255,0,85,.2);color:#ff6b9d;border-radius:5px;padding:6px 8px;font-size:.65rem;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .1s;flex-shrink:0;line-height:1.2}
                 .s:hover{background:rgba(255,0,85,.1);border-color:rgba(255,0,85,.5);color:#fff}
                 .s:active{background:#ff0055;color:#fff;transform:scale(.96)}
-                .s.cur{background:rgba(255,0,85,.18);border-color:rgba(255,0,85,.7);color:#fff;font-family:'Orbitron',monospace;font-size:.55rem;cursor:default;text-shadow:0 0 6px rgba(255,0,85,.4);box-shadow:0 0 8px rgba(255,0,85,.15)}
-                .bar{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;cursor:pointer;flex-shrink:0}
-                .bf{height:100%;background:linear-gradient(90deg,#ff0055,#ff3377);border-radius:2px;transition:width .2s;width:0%;box-shadow:0 0 4px rgba(255,0,85,.4)}
-                .tr{display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-                .tt{font-family:'Orbitron',monospace;font-size:.42rem;color:#ff0055;opacity:.85}
-                .tr2{font-family:'Orbitron',monospace;font-size:.42rem;color:#555}
+                .s.cur{background:rgba(255,0,85,.18);border-color:rgba(255,0,85,.7);color:#fff;font-family:'Orbitron',monospace;font-size:.68rem;text-shadow:0 0 6px rgba(255,0,85,.4);box-shadow:0 0 8px rgba(255,0,85,.15)}
+                .s.cur.playing::after{content:' ▶';font-size:.5rem}
+                .s.cur.paused::after{content:' ❚❚';font-size:.5rem}
+                .bar{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;cursor:pointer;flex-shrink:0;margin-top:2px}
+                .bf{height:100%;background:linear-gradient(90deg,#ff0055,#ff3377);border-radius:3px;transition:width .2s;width:0%;box-shadow:0 0 6px rgba(255,0,85,.4)}
+                .tr{display:flex;justify-content:space-between;align-items:center;flex-shrink:0;padding:1px 0}
+                .tt{font-family:'Orbitron',monospace;font-size:.6rem;color:#ff0055;opacity:.9}
+                .tr2{font-family:'Orbitron',monospace;font-size:.6rem;color:#555}
             </style>`;
             miniWin.document.body.innerHTML = `
                 <div class="list" id="ml">${buildSongList()}</div>
@@ -1242,9 +1265,15 @@ async function togglePinOnTop() {
             `;
             miniWin.document.getElementById('ml').addEventListener('click', (e) => {
                 const btn = e.target.closest('.s');
-                if (!btn || btn.classList.contains('cur')) return;
+                if (!btn) return;
                 const idx = parseInt(btn.dataset.i);
-                if (!isNaN(idx) && idx >= 0 && idx < playlist.length) loadSongWithFade(idx, true);
+                if (isNaN(idx) || idx < 0 || idx >= playlist.length) return;
+                if (btn.classList.contains('cur')) {
+                    if (isPlaying) { pauseAudio(); }
+                    else { playAudio(); }
+                } else {
+                    loadSongWithFade(idx, true);
+                }
             });
             miniWin.document.getElementById('mb').onclick = (e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -1266,7 +1295,15 @@ async function togglePinOnTop() {
                     let needRebuild = items.length !== playlist.length;
                     if (!needRebuild) { for (let i = 0; i < items.length; i++) { if (items[i].textContent !== playlist[i].name) { needRebuild = true; break; } } }
                     if (needRebuild) { d.getElementById('ml').innerHTML = buildSongList(); }
-                    else { items.forEach((it, i) => it.classList.toggle('cur', i === currentIndex)); }
+                    else { items.forEach((it, i) => {
+                        it.classList.toggle('cur', i === currentIndex);
+                        if (i === currentIndex) {
+                            it.classList.toggle('playing', isPlaying);
+                            it.classList.toggle('paused', !isPlaying);
+                        } else {
+                            it.classList.remove('playing', 'paused');
+                        }
+                    }); }
                     const curEl = d.querySelector('.s.cur');
                     if (curEl) curEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                     const mbf = d.getElementById('mbf');
