@@ -978,35 +978,47 @@ async function togglePinOnTop() {
         }
         try {
             pipWindow = await documentPictureInPicture.requestWindow({
-                width: 380,
-                height: 160
+                width: 300,
+                height: 100
             });
 
-            // Style PiP window
+            // Style PiP window - compact, semi-transparent, display-only style
             const pipDoc = pipWindow.document;
             pipDoc.head.innerHTML = '';
             
-            // Copy essential styles
             const styleEl = pipDoc.createElement('style');
             styleEl.textContent = `
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body {
-                    background: #0a0a0f;
+                    background: rgba(10,10,15,0.88);
                     font-family: 'Inter','Segoe UI',system-ui,sans-serif;
                     color: #fff;
                     display: flex;
                     flex-direction: column;
                     height: 100vh;
-                    padding: 10px;
-                    gap: 8px;
+                    padding: 6px 10px;
+                    gap: 4px;
                     overflow: hidden;
                     user-select: none;
+                    border-radius: 12px;
                 }
+                .pip-top {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .pip-signature {
+                    font-family: 'Orbitron',monospace;
+                    font-size: 0.4rem;
+                    color: #444;
+                    letter-spacing: 1px;
+                    flex-shrink: 0;
+                }
+                .pip-signature span { color: #ffd700; }
                 .pip-title {
                     font-family: 'Orbitron',monospace;
-                    font-size: 0.85rem;
+                    font-size: 0.7rem;
                     font-weight: 700;
-                    text-align: center;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -1016,50 +1028,13 @@ async function togglePinOnTop() {
                     background-clip: text;
                     -webkit-text-fill-color: transparent;
                     animation: shimmer 3s linear infinite;
-                }
-                @keyframes shimmer { to { background-position: 200% center } }
-                .pip-time {
-                    font-family: 'Orbitron',monospace;
-                    font-size: 0.65rem;
-                    color: #ff0055;
-                    text-align: center;
-                }
-                .pip-controls {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                    justify-content: center;
                     flex: 1;
                 }
-                .pip-btn {
-                    background: rgba(255,255,255,0.05);
-                    border: 1.5px solid rgba(255,0,85,0.5);
-                    color: #ff0055;
-                    border-radius: 50%;
-                    width: 44px;
-                    height: 44px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    transition: all 0.15s;
-                    text-shadow: 0 0 8px rgba(255,0,85,0.4);
-                }
-                .pip-btn:hover { background: rgba(255,0,85,0.15); transform: scale(1.05); }
-                .pip-btn:active { background: #ff0055; color: #fff; transform: scale(0.95); }
-                .pip-btn.play-btn {
-                    width: 52px; height: 52px; font-size: 1.2rem;
-                    border-radius: 14px;
-                }
-                .pip-btn.play-btn.is-playing {
-                    background: #ff0055 !important; color: #fff !important;
-                    box-shadow: 0 0 20px rgba(255,0,85,0.4);
-                }
+                @keyframes shimmer { to { background-position: 200% center } }
                 .pip-bar {
                     width: 100%;
-                    height: 4px;
-                    background: rgba(255,255,255,0.08);
+                    height: 3px;
+                    background: rgba(255,255,255,0.06);
                     border-radius: 2px;
                     overflow: hidden;
                     cursor: pointer;
@@ -1071,45 +1046,76 @@ async function togglePinOnTop() {
                     transition: width 0.2s;
                     width: 0%;
                 }
+                .pip-time {
+                    font-family: 'Orbitron',monospace;
+                    font-size: 0.5rem;
+                    color: #ff0055;
+                    text-align: center;
+                    opacity: 0.8;
+                }
+                .pip-controls {
+                    display: flex;
+                    gap: 6px;
+                    align-items: center;
+                    justify-content: center;
+                    flex: 1;
+                }
+                .pip-btn {
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,0,85,0.4);
+                    color: #ff0055;
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 0.75rem;
+                    transition: all 0.15s;
+                }
+                .pip-btn:hover { background: rgba(255,0,85,0.12); }
+                .pip-btn:active { background: #ff0055; color: #fff; transform: scale(0.92); }
+                .pip-btn.play-btn {
+                    width: 40px; height: 40px; font-size: 1rem;
+                    border-radius: 12px;
+                    border: 1.5px solid rgba(255,0,85,0.5);
+                }
+                .pip-btn.play-btn.is-playing {
+                    background: #ff0055 !important; color: #fff !important;
+                    box-shadow: 0 0 15px rgba(255,0,85,0.35);
+                }
                 .pip-vol-row {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
-                    font-size: 0.6rem;
-                    color: #888;
+                    gap: 5px;
+                    font-size: 0.5rem;
+                    color: #666;
                 }
-                .pip-vol-row i { color: #ff0055; font-size: 0.7rem; }
+                .pip-vol-row i { color: #ff0055; font-size: 0.55rem; opacity: 0.7; }
                 .pip-vol-bar {
-                    flex: 1; height: 3px; background: rgba(255,255,255,0.08);
-                    border-radius: 2px; cursor: pointer; position: relative;
+                    flex: 1; height: 2px; background: rgba(255,255,255,0.06);
+                    border-radius: 1px; cursor: pointer;
                 }
                 .pip-vol-fill {
-                    height: 100%; background: #ff0055; border-radius: 2px;
-                    transition: width 0.15s;
+                    height: 100%; background: #ff0055; border-radius: 1px;
+                    transition: width 0.15s; opacity: 0.7;
                 }
-                .pip-signature {
-                    font-family: 'Orbitron',monospace;
-                    font-size: 0.5rem;
-                    color: #333;
-                    text-align: center;
-                    letter-spacing: 2px;
-                }
-                .pip-signature span { color: #ffd700; }
                 .fa, .fas { font-family: 'Font Awesome 6 Free'; font-weight: 900; }
             `;
             pipDoc.head.appendChild(styleEl);
 
-            // Copy Font Awesome link
             const faLink = pipDoc.createElement('link');
             faLink.rel = 'stylesheet';
             faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
             pipDoc.head.appendChild(faLink);
 
-            // Build PiP UI
+            // Build compact PiP UI - display only, non-intrusive
             pipDoc.body.innerHTML = `
-                <div class="pip-signature"><span>NMC</span> PRO</div>
-                <div class="pip-title" id="pip-title">${escapeHtml(playlist[currentIndex]?.name || 'NMC Music Pro')}</div>
-                <div class="pip-time" id="pip-time">0:00 / 0:00</div>
+                <div class="pip-top">
+                    <div class="pip-signature"><span>NMC</span></div>
+                    <div class="pip-title" id="pip-title">${escapeHtml(playlist[currentIndex]?.name || 'NMC Music Pro')}</div>
+                </div>
                 <div class="pip-bar" id="pip-bar"><div class="pip-bar-fill" id="pip-bar-fill"></div></div>
                 <div class="pip-controls">
                     <div class="pip-btn" id="pip-prev"><i class="fas fa-backward-step"></i></div>
@@ -1152,41 +1158,28 @@ async function togglePinOnTop() {
                         clearInterval(pipSyncInterval);
                         pipSyncInterval = null;
                         pipWindow = null;
-                        document.body.style.display = '';
                         updatePinBtn();
                         return;
                     }
                     const el = getEl();
                     const d = pipWindow.document;
-                    // Title
                     const titleEl = d.getElementById('pip-title');
                     if (titleEl) titleEl.textContent = playlist[currentIndex]?.name || 'NMC Music Pro';
-                    // Time
-                    const timeEl = d.getElementById('pip-time');
-                    if (timeEl && el.duration && isFinite(el.duration)) {
-                        timeEl.textContent = `${formatTime(el.currentTime)} / ${formatTime(el.duration)}`;
-                    }
-                    // Progress bar
                     const fillEl = d.getElementById('pip-bar-fill');
                     if (fillEl && el.duration && isFinite(el.duration)) {
                         fillEl.style.width = ((el.currentTime / el.duration) * 100) + '%';
                     }
-                    // Play button state
                     const playEl = d.getElementById('pip-play');
                     if (playEl) {
                         playEl.querySelector('i').className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
                         playEl.classList.toggle('is-playing', isPlaying);
                     }
-                    // Volume
                     const volFill = d.getElementById('pip-vol-fill');
                     if (volFill) volFill.style.width = Math.round(currentVolume * 100) + '%';
                     const volPct = d.getElementById('pip-vol-pct');
                     if (volPct) volPct.textContent = Math.round(currentVolume * 100) + '%';
                 } catch(e) { /* window closed */ }
             }, 250);
-
-            // Hide main body (optional - keep it running but invisible)
-            // We keep the main app visible so user can manage playlist
 
             // When PiP window closes
             pipWindow.addEventListener('pagehide', () => {
@@ -1195,7 +1188,7 @@ async function togglePinOnTop() {
                 updatePinBtn();
             });
 
-            showToast('Đã ghim trên cùng 📌');
+            showToast('Đã ghim trên cùng - chỉ hiển thị, không chặn ứng dụng khác');
             updatePinBtn();
             return;
         } catch(e) {
@@ -1203,46 +1196,68 @@ async function togglePinOnTop() {
         }
     }
 
-    // Method 2: Fallback - open mini popup window
+    // Method 2: Fallback - open mini popup window (compact, display-only)
     if (!pipWindow || pipWindow.closed) {
-        const w = 400, h = 220;
-        const left = (screen.width - w) / 2;
-        const top = 0;
-        const miniWin = window.open('', 'nmc_mini_player', `width=${w},height=${h},left=${left},top=${top},alwaysOnTop=yes,location=no,menubar=no,toolbar=no,status=no`);
+        const w = 320, h = 140;
+        const left = screen.width - w - 20;
+        const top = 20;
+        const miniWin = window.open('', 'nmc_mini_player', `width=${w},height=${h},left=${left},top=${top},alwaysOnTop=yes,location=no,menubar=no,toolbar=no,status=no,resizable=no`);
         if (miniWin) {
             miniWin.document.head.innerHTML = `
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
                     *{margin:0;padding:0;box-sizing:border-box}
-                    body{background:#0a0a0f;font-family:'Inter',system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;height:100vh;padding:10px;gap:6px;overflow:hidden;user-select:none}
-                    .t{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ff6b9d}
-                    .tm{font-family:'Orbitron',monospace;font-size:.6rem;color:#ff0055;text-align:center}
-                    .c{display:flex;gap:8px;align-items:center;justify-content:center;flex:1}
-                    .b{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,0,85,.5);color:#ff0055;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all .15s}
-                    .b:hover{background:rgba(255,0,85,.15)}
-                    .b:active{background:#ff0055;color:#fff}
-                    .bp{width:52px;height:52px;font-size:1.2rem;border-radius:14px}
-                    .bp.on{background:#ff0055!important;color:#fff!important;box-shadow:0 0 20px rgba(255,0,85,.4)}
-                    .sig{font-family:'Orbitron',monospace;font-size:.45rem;color:#333;text-align:center;letter-spacing:2px}
+                    body{background:rgba(10,10,15,0.88);font-family:'Inter',system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;height:100vh;padding:6px 10px;gap:4px;overflow:hidden;user-select:none}
+                    .top{display:flex;align-items:center;gap:6px}
+                    .sig{font-family:'Orbitron',monospace;font-size:.4rem;color:#444;letter-spacing:1px;flex-shrink:0}
                     .sig span{color:#ffd700}
+                    .t{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ff6b9d;flex:1}
+                    .bar{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;cursor:pointer}
+                    .bf{height:100%;background:linear-gradient(90deg,#ff0055,#ff3377);border-radius:2px;transition:width .2s;width:0%}
+                    .c{display:flex;gap:6px;align-items:center;justify-content:center;flex:1}
+                    .b{background:rgba(255,255,255,.04);border:1px solid rgba(255,0,85,.4);color:#ff0055;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.75rem;transition:all .15s}
+                    .b:hover{background:rgba(255,0,85,.12)}
+                    .b:active{background:#ff0055;color:#fff;transform:scale(.92)}
+                    .bp{width:40px;height:40px;font-size:1rem;border-radius:12px;border:1.5px solid rgba(255,0,85,.5)}
+                    .bp.on{background:#ff0055!important;color:#fff!important;box-shadow:0 0 15px rgba(255,0,85,.35)}
+                    .vr{display:flex;align-items:center;gap:5px;font-size:.5rem;color:#666}
+                    .vr i{color:#ff0055;font-size:.55rem;opacity:.7}
+                    .vb{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:1px;cursor:pointer}
+                    .vf{height:100%;background:#ff0055;border-radius:1px;transition:width .15s;opacity:.7}
                 </style>
             `;
             miniWin.document.body.innerHTML = `
-                <div class="sig"><span>NMC</span> PRO</div>
-                <div class="t" id="mt">${escapeHtml(playlist[currentIndex]?.name||'NMC Music Pro')}</div>
-                <div class="tm" id="mm">0:00 / 0:00</div>
+                <div class="top"><div class="sig"><span>NMC</span></div><div class="t" id="mt">${escapeHtml(playlist[currentIndex]?.name||'NMC Music Pro')}</div></div>
+                <div class="bar" id="mb"><div class="bf" id="mbf"></div></div>
                 <div class="c">
                     <div class="b" id="mbp"><i class="fas fa-backward-step"></i></div>
                     <div class="b bp ${isPlaying?'on':''}" id="mbpl"><i class="fas ${isPlaying?'fa-pause':'fa-play'}"></i></div>
                     <div class="b" id="mbn"><i class="fas fa-forward-step"></i></div>
                 </div>
+                <div class="vr">
+                    <i class="fas fa-volume-low"></i>
+                    <div class="vb" id="mvb"><div class="vf" id="mvf" style="width:${Math.round(currentVolume*100)}%"></div></div>
+                    <span id="mvp">${Math.round(currentVolume*100)}%</span>
+                </div>
             `;
             miniWin.document.getElementById('mbpl').onclick = () => { isPlaying ? pauseAudio() : playAudio(); };
             miniWin.document.getElementById('mbp').onclick = prevSong;
             miniWin.document.getElementById('mbn').onclick = nextSong;
+            // Seek bar
+            miniWin.document.getElementById('mb').onclick = (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pct = (e.clientX - rect.left) / rect.width;
+                const el = getEl();
+                if (el.duration && isFinite(el.duration)) el.currentTime = pct * el.duration;
+            };
+            // Volume bar
+            miniWin.document.getElementById('mvb').onclick = (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                setVolume(pct);
+            };
             
             pipWindow = miniWin;
-            // Sync mini window
             if (pipSyncInterval) clearInterval(pipSyncInterval);
             pipSyncInterval = setInterval(() => {
                 try {
@@ -1253,14 +1268,18 @@ async function togglePinOnTop() {
                     const d = pipWindow.document;
                     const mt = d.getElementById('mt');
                     if (mt) mt.textContent = playlist[currentIndex]?.name || 'NMC Music Pro';
-                    const mm = d.getElementById('mm');
-                    if (mm && el.duration && isFinite(el.duration)) mm.textContent = `${formatTime(el.currentTime)} / ${formatTime(el.duration)}`;
+                    const mbf = d.getElementById('mbf');
+                    if (mbf && el.duration && isFinite(el.duration)) mbf.style.width = ((el.currentTime / el.duration) * 100) + '%';
                     const mbpl = d.getElementById('mbpl');
                     if (mbpl) { mbpl.querySelector('i').className = isPlaying ? 'fas fa-pause' : 'fas fa-play'; mbpl.classList.toggle('on', isPlaying); }
+                    const mvf = d.getElementById('mvf');
+                    if (mvf) mvf.style.width = Math.round(currentVolume * 100) + '%';
+                    const mvp = d.getElementById('mvp');
+                    if (mvp) mvp.textContent = Math.round(currentVolume * 100) + '%';
                 } catch(e) {}
             }, 250);
             miniWin.addEventListener('beforeunload', () => { pipWindow = null; if (pipSyncInterval) { clearInterval(pipSyncInterval); pipSyncInterval = null; } updatePinBtn(); });
-            showToast('Đã mở mini player 📌');
+            showToast('Đã ghim trên cùng - chỉ hiển thị, không chặn ứng dụng khác');
             updatePinBtn();
         } else {
             showToast('Trình duyệt không hỗ trợ Ghim trên cùng');
