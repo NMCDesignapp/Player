@@ -403,12 +403,29 @@ function rampGain(gn, fromVal, toVal, duration, startTime) {
     gn.gain.exponentialRampToValueAtTime(Math.max(toVal, 0.0001), now + duration);
 }
 
+// ObjectURL cache - avoids re-reading IndexedDB every switch
+const urlCache = new Map();
+
 async function loadSongAudioInto(el, song) {
+    // Check cache first - much faster
+    if (urlCache.has(song.id)) {
+        el.src = urlCache.get(song.id);
+        el.load();
+        return;
+    }
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readonly');
         const req = tx.objectStore(STORE_NAME).get(song.id);
-        req.onsuccess = () => { if (req.result?.blob) { el.src = URL.createObjectURL(req.result.blob); el.load(); resolve(); } else reject('No data'); };
+        req.onsuccess = () => {
+            if (req.result?.blob) {
+                const url = URL.createObjectURL(req.result.blob);
+                urlCache.set(song.id, url);
+                el.src = url;
+                el.load();
+                resolve();
+            } else reject('No data');
+        };
         req.onerror = () => reject(req.error);
     });
 }
@@ -437,6 +454,7 @@ function loadSongWithFade(index, autoPlay = true) {
 
     loadSongAudioInto(newEl, song).then(() => {
         currentIndex = index;
+        nextSongPreloaded = false;
         songTitleDisplay.innerText = song.name;
 
         // No current audio playing → simple fade in (first song or after stop)
@@ -636,6 +654,7 @@ seekSlider.addEventListener('input', e => {
 seekSlider.addEventListener('mouseup', () => isSeeking = false);
 seekSlider.addEventListener('touchend', () => isSeeking = false);
 
+let nextSongPreloaded = false;
 function onTimeUpdate() {
     const el = getEl();
     if (this !== el) return; // ignore inactive player
@@ -644,6 +663,22 @@ function onTimeUpdate() {
         currentTimeSpan.innerText = formatTime(el.currentTime);
         document.getElementById('current-time-display').innerHTML = `${formatTime(el.currentTime)} / ${formatTime(el.duration)}`;
         enforceSongBounds();
+        // Preload next song into URL cache at 30% progress
+        if (!nextSongPreloaded && playlist.length > 1) {
+            const pct = el.currentTime / el.duration;
+            if (pct > 0.3) {
+                nextSongPreloaded = true;
+                const nextIdx = (currentIndex + 1) % playlist.length;
+                const nextSong = playlist[nextIdx];
+                if (nextSong && !urlCache.has(nextSong.id)) {
+                    openDB().then(db => {
+                        const tx = db.transaction(STORE_NAME, 'readonly');
+                        const req = tx.objectStore(STORE_NAME).get(nextSong.id);
+                        req.onsuccess = () => { if (req.result?.blob) urlCache.set(nextSong.id, URL.createObjectURL(req.result.blob)); };
+                    }).catch(() => {});
+                }
+            }
+        }
     }
 }
 function onEnded() {
@@ -693,6 +728,8 @@ document.getElementById('confirm-upload').addEventListener('click', async () => 
         const id = 's_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2,6);
         try {
             await saveSongToDB({ id, name, blob: f, fileSize: f.size, fileType: f.type, startTime: 0, endTime: 0, addedAt: Date.now() });
+            // Cache ObjectURL immediately so no delay when playing
+            urlCache.set(id, URL.createObjectURL(f));
             playlist.push({ id, name, startTime: 0, endTime: 0, fileSize: f.size, fileType: f.type });
             added++;
         } catch (e) { console.error(e); showToast('Lỗi lưu: ' + name); }
@@ -731,7 +768,7 @@ async function saveSongSettings() {
 async function deleteCurrentSong() {
     if (editingSongIndex === -1) return;
     const rm = playlist.splice(editingSongIndex, 1)[0];
-    try { await deleteSongFromDB(rm.id); } catch(e){}
+    try { await deleteSongFromDB(rm.id); if (urlCache.has(rm.id)) { URL.revokeObjectURL(urlCache.get(rm.id)); urlCache.delete(rm.id); } } catch(e){}
     showToast(`Đã xoá "${rm.name}"`);
     if (!playlist.length) { audio.pause(); audio.src = ''; audio2.pause(); audio2.src = ''; isPlaying = false; currentIndex = 0; songTitleDisplay.innerText = 'Chọn bài hát'; updatePlayPauseUI(); }
     else { if (editingSongIndex < currentIndex) currentIndex--; else if (editingSongIndex === currentIndex) { if (currentIndex >= playlist.length) currentIndex = playlist.length - 1; if (currentIndex >= 0) loadSongWithFade(currentIndex, true); } }
@@ -937,6 +974,9 @@ async function initApp() {
         if (saved.length) {
             playlist = saved.map(s => ({ id:s.id, name:s.name, startTime:s.startTime||0, endTime:s.endTime||0, fileSize:s.fileSize||0, fileType:s.fileType||'' }));
             showToast(`Đã tải ${playlist.length} bài hát`);
+
+            // Preload all ObjectURLs into cache in background — no delay when playing
+            preloadAllURLs(saved);
         }
     } catch(e) { console.error(e); }
 
@@ -947,6 +987,26 @@ async function initApp() {
     if (si !== null) { const idx = parseInt(si); if (idx >= 0 && idx < playlist.length) { currentIndex = idx; songTitleDisplay.innerText = playlist[currentIndex].name; } }
 
     setInterval(() => { localStorage.setItem('nmc_vol', currentVolume); localStorage.setItem('nmc_loop', loopMode); localStorage.setItem('nmc_idx', currentIndex); }, 2000);
+}
+
+// Preload all song blobs into ObjectURL cache — plays instantly after
+async function preloadAllURLs(savedSongs) {
+    // Prioritize current song first, then the rest
+    const si = localStorage.getItem('nmc_idx');
+    const curIdx = si !== null ? parseInt(si) : 0;
+    const order = [];
+    if (curIdx >= 0 && curIdx < savedSongs.length) order.push(curIdx);
+    for (let i = 0; i < savedSongs.length; i++) { if (i !== curIdx) order.push(i); }
+
+    for (const i of order) {
+        const s = savedSongs[i];
+        if (!s?.id || !s?.blob || urlCache.has(s.id)) continue;
+        try {
+            urlCache.set(s.id, URL.createObjectURL(s.blob));
+        } catch(e) {}
+    }
+    // Release blob references from saved data to free memory
+    savedSongs.length = 0;
 }
 initApp();
 
@@ -964,73 +1024,76 @@ let pipWindow = null;
 let pipSyncInterval = null;
 
 async function togglePinOnTop() {
+    // Helper: get prev/next song names
+    const prevName = playlist.length > 1 ? playlist[(currentIndex - 1 + playlist.length) % playlist.length]?.name || '' : '';
+    const nextName = playlist.length > 1 ? playlist[(currentIndex + 1) % playlist.length]?.name || '' : '';
+    const curName = playlist[currentIndex]?.name || 'NMC Music Pro';
+
     // Method 1: Document Picture-in-Picture API (Chrome 116+)
     if ('documentPictureInPicture' in window) {
         if (pipWindow) {
-            // Close PiP → restore main app
             pipWindow.close();
             pipWindow = null;
             if (pipSyncInterval) { clearInterval(pipSyncInterval); pipSyncInterval = null; }
-            document.body.style.display = '';
-            showToast('Đã thoát chế độ Ghim trên cùng');
+            showToast('Đã thoát Ghim trên cùng');
             updatePinBtn();
             return;
         }
         try {
-            pipWindow = await documentPictureInPicture.requestWindow({
-                width: 300,
-                height: 100
-            });
+            pipWindow = await documentPictureInPicture.requestWindow({ width: 280, height: 70 });
 
-            // Style PiP window - compact, semi-transparent, display-only style
             const pipDoc = pipWindow.document;
             pipDoc.head.innerHTML = '';
-            
+
             const styleEl = pipDoc.createElement('style');
             styleEl.textContent = `
-                * { margin: 0; padding: 0; box-sizing: border-box; }
+                * { margin:0; padding:0; box-sizing:border-box; }
                 body {
-                    background: rgba(10,10,15,0.88);
+                    background: rgba(8,8,14,0.92);
                     font-family: 'Inter','Segoe UI',system-ui,sans-serif;
                     color: #fff;
                     display: flex;
                     flex-direction: column;
                     height: 100vh;
-                    padding: 6px 10px;
-                    gap: 4px;
+                    padding: 5px 8px;
+                    gap: 3px;
                     overflow: hidden;
                     user-select: none;
-                    border-radius: 12px;
                 }
-                .pip-top {
+                .row {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 4px;
                 }
-                .pip-signature {
-                    font-family: 'Orbitron',monospace;
-                    font-size: 0.4rem;
-                    color: #444;
-                    letter-spacing: 1px;
-                    flex-shrink: 0;
-                }
-                .pip-signature span { color: #ffd700; }
-                .pip-title {
-                    font-family: 'Orbitron',monospace;
-                    font-size: 0.7rem;
-                    font-weight: 700;
+                .song-btn {
+                    flex: 1;
+                    min-width: 0;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,0,85,0.35);
+                    color: #ff6b9d;
+                    border-radius: 6px;
+                    padding: 4px 6px;
+                    font-size: 0.55rem;
+                    font-family: 'Inter',sans-serif;
+                    font-weight: 600;
+                    cursor: pointer;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
-                    background: linear-gradient(90deg,#fff,#ff6b9d,#fff);
-                    background-size: 200% auto;
-                    -webkit-background-clip: text;
-                    background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    animation: shimmer 3s linear infinite;
-                    flex: 1;
+                    text-align: center;
+                    transition: all 0.12s;
                 }
-                @keyframes shimmer { to { background-position: 200% center } }
+                .song-btn:hover { background: rgba(255,0,85,0.12); border-color: rgba(255,0,85,0.6); }
+                .song-btn:active { background: #ff0055; color: #fff; transform: scale(0.95); }
+                .song-btn.cur {
+                    background: rgba(255,0,85,0.15);
+                    border-color: rgba(255,0,85,0.6);
+                    color: #fff;
+                    font-family: 'Orbitron',monospace;
+                    font-size: 0.6rem;
+                    cursor: default;
+                    text-shadow: 0 0 6px rgba(255,0,85,0.3);
+                }
                 .pip-bar {
                     width: 100%;
                     height: 3px;
@@ -1046,97 +1109,42 @@ async function togglePinOnTop() {
                     transition: width 0.2s;
                     width: 0%;
                 }
+                .time-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
                 .pip-time {
                     font-family: 'Orbitron',monospace;
-                    font-size: 0.5rem;
+                    font-size: 0.45rem;
                     color: #ff0055;
-                    text-align: center;
                     opacity: 0.8;
                 }
-                .pip-controls {
-                    display: flex;
-                    gap: 6px;
-                    align-items: center;
-                    justify-content: center;
-                    flex: 1;
-                }
-                .pip-btn {
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,0,85,0.4);
-                    color: #ff0055;
-                    border-radius: 50%;
-                    width: 32px;
-                    height: 32px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: 0.75rem;
-                    transition: all 0.15s;
-                }
-                .pip-btn:hover { background: rgba(255,0,85,0.12); }
-                .pip-btn:active { background: #ff0055; color: #fff; transform: scale(0.92); }
-                .pip-btn.play-btn {
-                    width: 40px; height: 40px; font-size: 1rem;
-                    border-radius: 12px;
-                    border: 1.5px solid rgba(255,0,85,0.5);
-                }
-                .pip-btn.play-btn.is-playing {
-                    background: #ff0055 !important; color: #fff !important;
-                    box-shadow: 0 0 15px rgba(255,0,85,0.35);
-                }
-                .pip-vol-row {
-                    display: flex;
-                    align-items: center;
-                    gap: 5px;
-                    font-size: 0.5rem;
+                .pip-remain {
+                    font-family: 'Orbitron',monospace;
+                    font-size: 0.45rem;
                     color: #666;
                 }
-                .pip-vol-row i { color: #ff0055; font-size: 0.55rem; opacity: 0.7; }
-                .pip-vol-bar {
-                    flex: 1; height: 2px; background: rgba(255,255,255,0.06);
-                    border-radius: 1px; cursor: pointer;
-                }
-                .pip-vol-fill {
-                    height: 100%; background: #ff0055; border-radius: 1px;
-                    transition: width 0.15s; opacity: 0.7;
-                }
-                .fa, .fas { font-family: 'Font Awesome 6 Free'; font-weight: 900; }
             `;
             pipDoc.head.appendChild(styleEl);
 
-            const faLink = pipDoc.createElement('link');
-            faLink.rel = 'stylesheet';
-            faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-            pipDoc.head.appendChild(faLink);
-
-            // Build compact PiP UI - display only, non-intrusive
             pipDoc.body.innerHTML = `
-                <div class="pip-top">
-                    <div class="pip-signature"><span>NMC</span></div>
-                    <div class="pip-title" id="pip-title">${escapeHtml(playlist[currentIndex]?.name || 'NMC Music Pro')}</div>
+                <div class="row">
+                    ${prevName ? `<div class="song-btn" id="pip-prev">${escapeHtml(prevName)}</div>` : ''}
+                    <div class="song-btn cur" id="pip-cur">${escapeHtml(curName)}</div>
+                    ${nextName ? `<div class="song-btn" id="pip-next">${escapeHtml(nextName)}</div>` : ''}
                 </div>
                 <div class="pip-bar" id="pip-bar"><div class="pip-bar-fill" id="pip-bar-fill"></div></div>
-                <div class="pip-controls">
-                    <div class="pip-btn" id="pip-prev"><i class="fas fa-backward-step"></i></div>
-                    <div class="pip-btn play-btn ${isPlaying ? 'is-playing' : ''}" id="pip-play"><i class="fas ${isPlaying ? 'fa-pause' : 'fa-play'}"></i></div>
-                    <div class="pip-btn" id="pip-next"><i class="fas fa-forward-step"></i></div>
-                </div>
-                <div class="pip-vol-row">
-                    <i class="fas fa-volume-low"></i>
-                    <div class="pip-vol-bar" id="pip-vol-bar"><div class="pip-vol-fill" id="pip-vol-fill" style="width:${Math.round(currentVolume*100)}%"></div></div>
-                    <span id="pip-vol-pct">${Math.round(currentVolume*100)}%</span>
+                <div class="time-row">
+                    <div class="pip-time" id="pip-time">0:00</div>
+                    <div class="pip-remain" id="pip-remain">-0:00</div>
                 </div>
             `;
 
-            // PiP control events
-            pipDoc.getElementById('pip-play').addEventListener('click', () => {
-                isPlaying ? pauseAudio() : playAudio();
-            });
-            pipDoc.getElementById('pip-prev').addEventListener('click', prevSong);
-            pipDoc.getElementById('pip-next').addEventListener('click', nextSong);
-
-            // PiP seek bar
+            // Events - 1 click switches song
+            if (prevName) pipDoc.getElementById('pip-prev').addEventListener('click', prevSong);
+            if (nextName) pipDoc.getElementById('pip-next').addEventListener('click', nextSong);
+            // Seek bar
             pipDoc.getElementById('pip-bar').addEventListener('click', (e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pct = (e.clientX - rect.left) / rect.width;
@@ -1144,51 +1152,55 @@ async function togglePinOnTop() {
                 if (el.duration && isFinite(el.duration)) el.currentTime = pct * el.duration;
             });
 
-            // PiP volume bar
-            pipDoc.getElementById('pip-vol-bar').addEventListener('click', (e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-                setVolume(pct);
-            });
-
-            // Sync PiP with main player
+            // Sync
             pipSyncInterval = setInterval(() => {
                 try {
                     if (!pipWindow || pipWindow.closed) {
-                        clearInterval(pipSyncInterval);
-                        pipSyncInterval = null;
-                        pipWindow = null;
-                        updatePinBtn();
-                        return;
+                        clearInterval(pipSyncInterval); pipSyncInterval = null; pipWindow = null; updatePinBtn(); return;
                     }
                     const el = getEl();
                     const d = pipWindow.document;
-                    const titleEl = d.getElementById('pip-title');
-                    if (titleEl) titleEl.textContent = playlist[currentIndex]?.name || 'NMC Music Pro';
+                    const pName = playlist.length > 1 ? playlist[(currentIndex - 1 + playlist.length) % playlist.length]?.name || '' : '';
+                    const cName = playlist[currentIndex]?.name || 'NMC Music Pro';
+                    const nName = playlist.length > 1 ? playlist[(currentIndex + 1) % playlist.length]?.name || '' : '';
+                    // Rebuild row if songs changed
+                    const prevEl = d.getElementById('pip-prev');
+                    const curEl = d.getElementById('pip-cur');
+                    const nextEl = d.getElementById('pip-next');
+                    if (prevEl && prevEl.textContent !== pName) {
+                        prevEl.textContent = pName;
+                        prevEl.onclick = prevSong;
+                        prevEl.style.display = pName ? '' : 'none';
+                    }
+                    if (curEl) curEl.textContent = cName;
+                    if (nextEl && nextEl.textContent !== nName) {
+                        nextEl.textContent = nName;
+                        nextEl.onclick = nextSong;
+                        nextEl.style.display = nName ? '' : 'none';
+                    }
+                    // Progress
                     const fillEl = d.getElementById('pip-bar-fill');
                     if (fillEl && el.duration && isFinite(el.duration)) {
                         fillEl.style.width = ((el.currentTime / el.duration) * 100) + '%';
                     }
-                    const playEl = d.getElementById('pip-play');
-                    if (playEl) {
-                        playEl.querySelector('i').className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
-                        playEl.classList.toggle('is-playing', isPlaying);
+                    // Time
+                    const timeEl = d.getElementById('pip-time');
+                    if (timeEl) timeEl.textContent = formatTime(el.currentTime);
+                    const remainEl = d.getElementById('pip-remain');
+                    if (remainEl && el.duration && isFinite(el.duration)) {
+                        const rem = el.duration - el.currentTime;
+                        remainEl.textContent = '-' + formatTime(rem);
                     }
-                    const volFill = d.getElementById('pip-vol-fill');
-                    if (volFill) volFill.style.width = Math.round(currentVolume * 100) + '%';
-                    const volPct = d.getElementById('pip-vol-pct');
-                    if (volPct) volPct.textContent = Math.round(currentVolume * 100) + '%';
-                } catch(e) { /* window closed */ }
+                } catch(e) {}
             }, 250);
 
-            // When PiP window closes
             pipWindow.addEventListener('pagehide', () => {
                 pipWindow = null;
                 if (pipSyncInterval) { clearInterval(pipSyncInterval); pipSyncInterval = null; }
                 updatePinBtn();
             });
 
-            showToast('Đã ghim trên cùng - chỉ hiển thị, không chặn ứng dụng khác');
+            showToast('Đã ghim trên cùng');
             updatePinBtn();
             return;
         } catch(e) {
@@ -1196,67 +1208,45 @@ async function togglePinOnTop() {
         }
     }
 
-    // Method 2: Fallback - open mini popup window (compact, display-only)
+    // Method 2: Fallback popup
     if (!pipWindow || pipWindow.closed) {
-        const w = 320, h = 140;
-        const left = screen.width - w - 20;
-        const top = 20;
+        const w = 300, h = 80;
+        const left = screen.width - w - 15;
+        const top = 15;
         const miniWin = window.open('', 'nmc_mini_player', `width=${w},height=${h},left=${left},top=${top},alwaysOnTop=yes,location=no,menubar=no,toolbar=no,status=no,resizable=no`);
         if (miniWin) {
-            miniWin.document.head.innerHTML = `
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    *{margin:0;padding:0;box-sizing:border-box}
-                    body{background:rgba(10,10,15,0.88);font-family:'Inter',system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;height:100vh;padding:6px 10px;gap:4px;overflow:hidden;user-select:none}
-                    .top{display:flex;align-items:center;gap:6px}
-                    .sig{font-family:'Orbitron',monospace;font-size:.4rem;color:#444;letter-spacing:1px;flex-shrink:0}
-                    .sig span{color:#ffd700}
-                    .t{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ff6b9d;flex:1}
-                    .bar{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;cursor:pointer}
-                    .bf{height:100%;background:linear-gradient(90deg,#ff0055,#ff3377);border-radius:2px;transition:width .2s;width:0%}
-                    .c{display:flex;gap:6px;align-items:center;justify-content:center;flex:1}
-                    .b{background:rgba(255,255,255,.04);border:1px solid rgba(255,0,85,.4);color:#ff0055;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.75rem;transition:all .15s}
-                    .b:hover{background:rgba(255,0,85,.12)}
-                    .b:active{background:#ff0055;color:#fff;transform:scale(.92)}
-                    .bp{width:40px;height:40px;font-size:1rem;border-radius:12px;border:1.5px solid rgba(255,0,85,.5)}
-                    .bp.on{background:#ff0055!important;color:#fff!important;box-shadow:0 0 15px rgba(255,0,85,.35)}
-                    .vr{display:flex;align-items:center;gap:5px;font-size:.5rem;color:#666}
-                    .vr i{color:#ff0055;font-size:.55rem;opacity:.7}
-                    .vb{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:1px;cursor:pointer}
-                    .vf{height:100%;background:#ff0055;border-radius:1px;transition:width .15s;opacity:.7}
-                </style>
-            `;
+            miniWin.document.head.innerHTML = `<style>
+                *{margin:0;padding:0;box-sizing:border-box}
+                body{background:rgba(8,8,14,0.92);font-family:'Inter',system-ui,sans-serif;color:#fff;display:flex;flex-direction:column;height:100vh;padding:5px 8px;gap:3px;overflow:hidden;user-select:none}
+                .row{display:flex;align-items:center;gap:4px}
+                .sb{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,0,85,.35);color:#ff6b9d;border-radius:6px;padding:4px 6px;font-size:.55rem;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;transition:all .12s}
+                .sb:hover{background:rgba(255,0,85,.12);border-color:rgba(255,0,85,.6)}
+                .sb:active{background:#ff0055;color:#fff;transform:scale(.95)}
+                .sb.c{background:rgba(255,0,85,.15);border-color:rgba(255,0,85,.6);color:#fff;font-family:'Orbitron',monospace;font-size:.6rem;cursor:default;text-shadow:0 0 6px rgba(255,0,85,.3)}
+                .bar{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;cursor:pointer}
+                .bf{height:100%;background:linear-gradient(90deg,#ff0055,#ff3377);border-radius:2px;transition:width .2s;width:0%}
+                .tr{display:flex;justify-content:space-between;align-items:center}
+                .tt{font-family:'Orbitron',monospace;font-size:.45rem;color:#ff0055;opacity:.8}
+                .tr2{font-family:'Orbitron',monospace;font-size:.45rem;color:#666}
+            </style>`;
             miniWin.document.body.innerHTML = `
-                <div class="top"><div class="sig"><span>NMC</span></div><div class="t" id="mt">${escapeHtml(playlist[currentIndex]?.name||'NMC Music Pro')}</div></div>
+                <div class="row">
+                    ${prevName ? `<div class="sb" id="mp">${escapeHtml(prevName)}</div>` : ''}
+                    <div class="sb c" id="mc">${escapeHtml(curName)}</div>
+                    ${nextName ? `<div class="sb" id="mn">${escapeHtml(nextName)}</div>` : ''}
+                </div>
                 <div class="bar" id="mb"><div class="bf" id="mbf"></div></div>
-                <div class="c">
-                    <div class="b" id="mbp"><i class="fas fa-backward-step"></i></div>
-                    <div class="b bp ${isPlaying?'on':''}" id="mbpl"><i class="fas ${isPlaying?'fa-pause':'fa-play'}"></i></div>
-                    <div class="b" id="mbn"><i class="fas fa-forward-step"></i></div>
-                </div>
-                <div class="vr">
-                    <i class="fas fa-volume-low"></i>
-                    <div class="vb" id="mvb"><div class="vf" id="mvf" style="width:${Math.round(currentVolume*100)}%"></div></div>
-                    <span id="mvp">${Math.round(currentVolume*100)}%</span>
-                </div>
+                <div class="tr"><div class="tt" id="mt">0:00</div><div class="tr2" id="mr">-0:00</div></div>
             `;
-            miniWin.document.getElementById('mbpl').onclick = () => { isPlaying ? pauseAudio() : playAudio(); };
-            miniWin.document.getElementById('mbp').onclick = prevSong;
-            miniWin.document.getElementById('mbn').onclick = nextSong;
-            // Seek bar
+            if (prevName) miniWin.document.getElementById('mp').onclick = prevSong;
+            if (nextName) miniWin.document.getElementById('mn').onclick = nextSong;
             miniWin.document.getElementById('mb').onclick = (e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pct = (e.clientX - rect.left) / rect.width;
                 const el = getEl();
                 if (el.duration && isFinite(el.duration)) el.currentTime = pct * el.duration;
             };
-            // Volume bar
-            miniWin.document.getElementById('mvb').onclick = (e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-                setVolume(pct);
-            };
-            
+
             pipWindow = miniWin;
             if (pipSyncInterval) clearInterval(pipSyncInterval);
             pipSyncInterval = setInterval(() => {
@@ -1266,20 +1256,25 @@ async function togglePinOnTop() {
                     }
                     const el = getEl();
                     const d = pipWindow.document;
-                    const mt = d.getElementById('mt');
-                    if (mt) mt.textContent = playlist[currentIndex]?.name || 'NMC Music Pro';
+                    const pName = playlist.length > 1 ? playlist[(currentIndex - 1 + playlist.length) % playlist.length]?.name || '' : '';
+                    const cName = playlist[currentIndex]?.name || 'NMC Music Pro';
+                    const nName = playlist.length > 1 ? playlist[(currentIndex + 1) % playlist.length]?.name || '' : '';
+                    const mp = d.getElementById('mp');
+                    if (mp) { if (mp.textContent !== pName) { mp.textContent = pName; mp.style.display = pName ? '' : 'none'; } }
+                    const mc = d.getElementById('mc');
+                    if (mc) mc.textContent = cName;
+                    const mn = d.getElementById('mn');
+                    if (mn) { if (mn.textContent !== nName) { mn.textContent = nName; mn.style.display = nName ? '' : 'none'; } }
                     const mbf = d.getElementById('mbf');
                     if (mbf && el.duration && isFinite(el.duration)) mbf.style.width = ((el.currentTime / el.duration) * 100) + '%';
-                    const mbpl = d.getElementById('mbpl');
-                    if (mbpl) { mbpl.querySelector('i').className = isPlaying ? 'fas fa-pause' : 'fas fa-play'; mbpl.classList.toggle('on', isPlaying); }
-                    const mvf = d.getElementById('mvf');
-                    if (mvf) mvf.style.width = Math.round(currentVolume * 100) + '%';
-                    const mvp = d.getElementById('mvp');
-                    if (mvp) mvp.textContent = Math.round(currentVolume * 100) + '%';
+                    const mt = d.getElementById('mt');
+                    if (mt) mt.textContent = formatTime(el.currentTime);
+                    const mr = d.getElementById('mr');
+                    if (mr && el.duration && isFinite(el.duration)) mr.textContent = '-' + formatTime(el.duration - el.currentTime);
                 } catch(e) {}
             }, 250);
             miniWin.addEventListener('beforeunload', () => { pipWindow = null; if (pipSyncInterval) { clearInterval(pipSyncInterval); pipSyncInterval = null; } updatePinBtn(); });
-            showToast('Đã ghim trên cùng - chỉ hiển thị, không chặn ứng dụng khác');
+            showToast('Đã ghim trên cùng');
             updatePinBtn();
         } else {
             showToast('Trình duyệt không hỗ trợ Ghim trên cùng');
