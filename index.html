@@ -100,6 +100,99 @@
         .install-step-text{font-size:.85rem;color:#ccc;line-height:1.5}
         .install-step-text b{color:#fff}
         .install-step-text .highlight{color:#00e676;font-weight:600}
+
+        /* Playlist-first layout: compact visualizer, spacious song grid */
+        .app-container{max-width:1280px;gap:8px;padding:9px}
+        .main-screen{flex:0 0 clamp(210px,29dvh,282px);height:auto}
+        .signature{top:8px;right:12px;font-size:.6rem}
+        .top-info{top:9px;padding:0 86px}
+        .song-title-display{font-size:clamp(.88rem,1.9vw,1.12rem);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .song-time-display{font-size:.7rem}
+        .visual-full{top:53px;height:88px;padding:0 15%;gap:3px;opacity:.73}
+        .visual-ring{top:95px;width:100px;height:100px;opacity:.3}
+        .full-viz-canvas{opacity:.24}
+        .controls-area{bottom:9px;width:96%;gap:5px}
+        .progress-wrapper{padding:6px 11px;min-height:32px;border-radius:10px}
+        .control-row{height:47px;border-radius:10px;padding:4px}
+        .bottom-area{flex:1;min-height:0;height:auto;gap:8px}
+        .playlist-container{
+            min-width:0;min-height:0;padding:10px;gap:9px;
+            grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
+            grid-auto-rows:126px;align-content:start;overscroll-behavior:contain;
+        }
+        .song-btn{
+            display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
+            padding:8px;gap:5px;min-width:0;overflow:hidden;border-radius:12px;
+            background:linear-gradient(145deg,#202038,#11111e);
+        }
+        .song-btn.playing{
+            background:linear-gradient(145deg,#11647a,#083b57 68%,#132841);
+            border:1.5px solid #21e1f2;
+            box-shadow:0 0 0 1px rgba(33,225,242,.1),0 0 18px rgba(0,200,255,.17);
+            animation:none;color:#fff;
+        }
+        .song-btn.selected:not(.playing){border-color:rgba(33,225,242,.55);background:linear-gradient(145deg,#20364b,#161e2e);color:#d6f9ff}
+        .song-btn.drag-target{outline:2px dashed #21e1f2;outline-offset:-4px}
+        .song-btn.dragging{opacity:.55}
+        .song-card-head{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:19px}
+        .song-order-label{font-size:.66rem;letter-spacing:.3px;color:#94a4ba;font-weight:700}
+        .song-btn.playing .song-order-label{color:#80fbff}
+        .song-drag-handle{border:0;background:transparent;color:#95a8b8;padding:0 6px;font-size:.85rem;cursor:grab;touch-action:none}
+        .song-drag-handle:active{cursor:grabbing}
+        .song-play-button{
+            display:flex;align-items:center;justify-content:center;width:100%;flex:1;min-height:0;
+            background:transparent;border:0;color:inherit;cursor:pointer;padding:0 2px;
+            font:inherit;overflow:hidden;
+        }
+        .song-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;word-break:break-word;font-size:.9rem;line-height:1.35;font-weight:700;text-align:center}
+        .song-card-actions{display:flex;gap:5px;align-items:center;justify-content:stretch;min-height:29px}
+        .song-action-btn{
+            background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.1);
+            border-radius:7px;flex:1;height:29px;min-width:0;cursor:pointer;color:#d7dce7;
+            font:inherit;font-size:.8rem;display:flex;align-items:center;justify-content:center;gap:5px;
+        }
+        .song-action-btn:disabled{opacity:.25;cursor:default}
+        .song-action-btn:not(:disabled):active{background:rgba(33,225,242,.22);color:#fff}
+        .song-action-edit{flex:1.35;color:#a3f1fb}
+        .song-btn.playing .song-action-btn{background:rgba(0,0,0,.22);border-color:rgba(150,245,255,.22);color:#f0ffff}
+        .song-action-btn:focus-visible,.song-play-button:focus-visible,.song-drag-handle:focus-visible{outline:2px solid #21e1f2;outline-offset:0}
+        .volume-sidebar{width:70px;min-width:70px;padding:8px 0}
+        .led-container{width:32px}
+        @media(max-width:620px){
+            .app-container{padding:6px;gap:6px}
+            .main-screen{flex-basis:clamp(200px,28dvh,245px)}
+            .top-info{padding:0 62px}
+            .signature{top:8px;right:8px;font-size:.53rem}
+            .visual-full{top:50px;height:65px;padding:0 10%}
+            .visual-ring{width:75px;height:75px;top:83px}
+            .controls-area{width:98%;bottom:6px;gap:4px}
+            .control-row{height:44px}
+            .progress-wrapper{min-height:29px;padding:4px 8px}
+            .bottom-area{flex-direction:column;gap:6px}
+            .playlist-container{flex:1;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:128px;padding:6px;gap:6px}
+            .song-btn{padding:6px;gap:3px}
+            .song-name{font-size:.82rem;line-height:1.3}
+            .song-card-actions{gap:3px}
+            .song-action-btn{height:28px;font-size:.73rem}
+            .song-action-edit{flex:1.1}
+            .volume-sidebar{
+                flex-shrink:0;width:100%;min-width:0;height:42px;min-height:42px;
+                flex-direction:row;justify-content:space-between;padding:5px 9px;gap:8px;
+            }
+            .sys-vol-label{display:none}
+            .led-container{flex-direction:row;width:auto;height:11px;flex:1;gap:3px}
+            .led-bar{height:100%;width:auto;flex:1}
+            .vol-percent{font-size:.83rem;margin:0;min-width:46px;text-align:center}
+            .sys-vol-badge{flex-shrink:0}
+        }
+        @media(max-height:580px){
+            .main-screen{flex-basis:183px}
+            .visual-full{top:47px;height:51px}
+            .visual-ring{top:69px;width:63px;height:63px}
+            .controls-area{bottom:5px}
+            .control-row{height:39px}
+            .progress-wrapper{min-height:28px;padding:3px 8px}
+        }
     </style>
 </head>
 <body>
@@ -169,7 +262,7 @@
         <h3>CÀI ĐẶT BÀI HÁT</h3>
         <div class="input-group">
             <label><i class="fas fa-tag"></i> Tên bài</label>
-            <input type="text" id="settings-song-name" readonly disabled style="background:#1e1e2e;">
+            <input type="text" id="settings-song-name" maxlength="120" placeholder="Nhập tên bài hát">
         </div>
         <div class="input-group">
             <label><i class="fas fa-play-circle"></i> Bắt đầu (giây)</label>
@@ -258,7 +351,7 @@ let gainNode = null, gainNode2 = null, masterGain = null;
 let activeAudio = 'audio'; // 'audio' or 'audio2'
 let ringCtx = null, barsArray = [];
 let systemVolumeLinked = true, currentVolume = 0.5;
-let editingSongIndex = -1;
+let editingSongIndex = -1, savingSongSettings = false;
 let playbackToken = 0, isSwitchingSong = false, pendingSongIndex = null;
 const transitionTimers = new Set(), gainEnvelopes = new Map();
 let deferredPrompt = null;
@@ -371,12 +464,17 @@ sysVolBadge.addEventListener('click', () => {
 // Volume sidebar drag
 const volumeSidebar = document.getElementById('volume-sidebar');
 let isDraggingVol = false;
-function handleVolMove(cY) { const r = volumeSidebar.getBoundingClientRect(); setVolume(Math.min(1, Math.max(0, (r.bottom - cY) / r.height))); }
-volumeSidebar.addEventListener('mousedown', e => { isDraggingVol = true; handleVolMove(e.clientY); e.preventDefault(); });
-window.addEventListener('mousemove', e => { if (isDraggingVol) handleVolMove(e.clientY); });
+function handleVolMove(clientX, clientY) {
+    const r = volumeSidebar.getBoundingClientRect();
+    const horizontal = window.matchMedia('(max-width:620px)').matches;
+    const level = horizontal ? (clientX - r.left) / r.width : (r.bottom - clientY) / r.height;
+    setVolume(Math.min(1, Math.max(0, level)));
+}
+volumeSidebar.addEventListener('mousedown', e => { if (e.target.closest('#sys-vol-badge')) return; isDraggingVol = true; handleVolMove(e.clientX, e.clientY); e.preventDefault(); });
+window.addEventListener('mousemove', e => { if (isDraggingVol) handleVolMove(e.clientX, e.clientY); });
 window.addEventListener('mouseup', () => { isDraggingVol = false; });
-volumeSidebar.addEventListener('touchstart', e => { isDraggingVol = true; handleVolMove(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
-window.addEventListener('touchmove', e => { if (isDraggingVol && e.touches.length) handleVolMove(e.touches[0].clientY); });
+volumeSidebar.addEventListener('touchstart', e => { if (e.target.closest('#sys-vol-badge')) return; isDraggingVol = true; handleVolMove(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+window.addEventListener('touchmove', e => { if (isDraggingVol && e.touches.length) { handleVolMove(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
 window.addEventListener('touchend', () => { isDraggingVol = false; });
 
 // ===================== Audio transitions (sample-accurate, linear) =====================
@@ -439,9 +537,13 @@ function scheduleTransition(callback, delayMs, token) {
 }
 
 function updateActiveSong(index, song) {
-    currentIndex = index;
+    // Reorder can happen while an async track switch is buffering.
+    const liveIndex = playlist.findIndex(s => s.id === song.id);
+    if (liveIndex >= 0) currentIndex = liveIndex;
     nextSongPreloaded = false;
     songTitleDisplay.innerText = song.name;
+    localStorage.setItem('nmc_idx', String(currentIndex));
+    localStorage.setItem('nmc_song_id', song.id);
     updatePlayPauseUI();
     updatePlaylistUI();
     setupMediaSession(song);
@@ -692,25 +794,145 @@ function setupMediaSession(song) {
     navigator.mediaSession.setActionHandler('nexttrack', () => nextSong());
 }
 
-// ===================== Playlist UI =====================
+// ===================== Playlist UI & persisted ordering =====================
+let draggedSongId = null;
+let orderWriteChain = Promise.resolve();
+
+function savePlaylistOrder(ids) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        ids.forEach((id, order) => {
+            const req = store.get(id);
+            req.onsuccess = () => {
+                if (req.result) {
+                    req.result.order = order;
+                    store.put(req.result);
+                }
+            };
+        });
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+        tx.onabort = () => { db.close(); reject(tx.error || new Error('Lưu thứ tự bị hủy')); };
+    }));
+}
+
+function persistPlaylistOrder() {
+    const ids = playlist.map(song => song.id); // Snapshot each requested order.
+    orderWriteChain = orderWriteChain.catch(() => {}).then(() => savePlaylistOrder(ids));
+    orderWriteChain.catch(error => { console.error('Save playlist order:', error); showToast('Không lưu được thứ tự bài hát'); });
+    return orderWriteChain;
+}
+
+function moveSongTo(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= playlist.length || to >= playlist.length) return;
+    const activeId = playlist[currentIndex]?.id;
+    const pendingId = pendingSongIndex == null ? null : playlist[pendingSongIndex]?.id;
+    const [moved] = playlist.splice(from, 1);
+    playlist.splice(to, 0, moved);
+    currentIndex = Math.max(0, playlist.findIndex(s => s.id === activeId));
+    pendingSongIndex = pendingId == null ? null : playlist.findIndex(s => s.id === pendingId);
+    localStorage.setItem('nmc_idx', String(currentIndex));
+    if (activeId) localStorage.setItem('nmc_song_id', activeId);
+    updatePlaylistUI();
+    persistPlaylistOrder();
+}
+
 function updatePlaylistUI() {
-    playlistContainer.innerHTML = '';
+    const previousScroll = playlistContainer.scrollTop;
+    playlistContainer.replaceChildren();
     playlist.forEach((song, idx) => {
-        const btn = document.createElement('div');
-        btn.classList.add('song-btn');
-        if (idx === currentIndex && isPlaying) btn.classList.add('playing');
-        btn.innerHTML = `<div class="song-name">${escapeHtml(song.name)}</div>`;
-        const ico = document.createElement('div');
-        ico.className = 'song-settings-icon';
-        ico.innerHTML = '<i class="fas fa-cog"></i>';
-        ico.addEventListener('click', e => { e.stopPropagation(); openSongSettings(idx); });
-        btn.appendChild(ico);
-        btn.addEventListener('click', () => { if (currentIndex === idx && isPlaying) pauseAudio(); else loadSongWithFade(idx, true); });
-        playlistContainer.appendChild(btn);
+        const card = document.createElement('div');
+        card.className = 'song-btn';
+        const isCurrent = idx === currentIndex;
+        if (isCurrent) card.classList.add(isPlaying ? 'playing' : 'selected');
+
+        const head = document.createElement('div');
+        head.className = 'song-card-head';
+        const number = document.createElement('span');
+        number.className = 'song-order-label';
+        number.textContent = isCurrent ? (isPlaying ? '● ĐANG PHÁT' : '❚❚ TẠM DỪNG') : String(idx + 1).padStart(2, '0');
+        const handle = document.createElement('span');
+        handle.className = 'song-drag-handle';
+        handle.draggable = true;
+        handle.title = 'Kéo để đổi vị trí (hoặc dùng nút mũi tên)';
+        handle.setAttribute('aria-label', 'Kéo sắp xếp bài hát');
+        handle.innerHTML = '<i class="fas fa-grip-lines"></i>';
+        handle.addEventListener('dragstart', e => {
+            draggedSongId = song.id;
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', song.id);
+            }
+            card.classList.add('dragging');
+        });
+        handle.addEventListener('dragend', () => {
+            draggedSongId = null;
+            document.querySelectorAll('.song-btn.drag-target,.song-btn.dragging').forEach(el => el.classList.remove('drag-target', 'dragging'));
+        });
+        head.append(number, handle);
+
+        const play = document.createElement('button');
+        play.type = 'button';
+        play.className = 'song-play-button';
+        play.title = isCurrent && isPlaying ? 'Tạm dừng ' + song.name : 'Phát ' + song.name;
+        const name = document.createElement('span');
+        name.className = 'song-name';
+        name.textContent = song.name;
+        play.appendChild(name);
+        play.addEventListener('click', () => {
+            const latestIndex = playlist.findIndex(s => s.id === song.id);
+            if (latestIndex < 0) return;
+            if (latestIndex === currentIndex) {
+                if (isPlaying) pauseAudio(); else playAudio();
+            } else {
+                loadSongWithFade(latestIndex, true);
+            }
+        });
+
+        const actions = document.createElement('div');
+        actions.className = 'song-card-actions';
+        const actionButton = (icon, label, action, disabled, isEdit = false) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'song-action-btn' + (isEdit ? ' song-action-edit' : '');
+            button.title = label + ': ' + song.name;
+            button.setAttribute('aria-label', label + ' ' + song.name);
+            button.disabled = !!disabled;
+            button.innerHTML = '<i class="fas ' + icon + '"></i>' + (isEdit ? '<span>Sửa</span>' : '');
+            button.addEventListener('click', action);
+            return button;
+        };
+        actions.append(
+            actionButton('fa-arrow-up', 'Đưa bài lên', () => moveSongTo(playlist.findIndex(s => s.id === song.id), playlist.findIndex(s => s.id === song.id) - 1), idx === 0),
+            actionButton('fa-pen', 'Sửa tên hoặc cài đặt', () => openSongSettings(playlist.findIndex(s => s.id === song.id)), false, true),
+            actionButton('fa-arrow-down', 'Đưa bài xuống', () => moveSongTo(playlist.findIndex(s => s.id === song.id), playlist.findIndex(s => s.id === song.id) + 1), idx === playlist.length - 1)
+        );
+        card.append(head, play, actions);
+
+        card.addEventListener('dragover', e => {
+            if (draggedSongId && draggedSongId !== song.id) {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                card.classList.add('drag-target');
+            }
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-target'));
+        card.addEventListener('drop', e => {
+            e.preventDefault();
+            card.classList.remove('drag-target');
+            const from = playlist.findIndex(s => s.id === draggedSongId);
+            const to = playlist.findIndex(s => s.id === song.id);
+            draggedSongId = null;
+            moveSongTo(from, to);
+        });
+        playlistContainer.appendChild(card);
     });
+    playlistContainer.scrollTop = previousScroll;
 }
 
 function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]||c); }
+
 
 // ===================== Events =====================
 playPauseBtn.addEventListener('click', () => { if (!playlist.length) { showToast('Hãy thêm nhạc trước'); return; } isPlaying ? pauseAudio() : playAudio(); });
@@ -807,10 +1029,10 @@ document.getElementById('confirm-upload').addEventListener('click', async () => 
         const name = (selectedFiles.length === 1 && customName) ? customName : f.name.replace(/\.[^/.]+$/, '');
         const id = 's_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2,6);
         try {
-            await saveSongToDB({ id, name, blob: f, fileSize: f.size, fileType: f.type, startTime: 0, endTime: 0, addedAt: Date.now() });
+            await saveSongToDB({ id, name, blob: f, fileSize: f.size, fileType: f.type, startTime: 0, endTime: 0, order: playlist.length, addedAt: Date.now() });
             // Cache ObjectURL immediately so no delay when playing
             urlCache.set(id, URL.createObjectURL(f));
-            playlist.push({ id, name, startTime: 0, endTime: 0, fileSize: f.size, fileType: f.type });
+            playlist.push({ id, name, startTime: 0, endTime: 0, order: playlist.length, fileSize: f.size, fileType: f.type });
             added++;
         } catch (e) { console.error(e); showToast('Lỗi lưu: ' + name); }
     }
@@ -826,24 +1048,78 @@ document.getElementById('confirm-upload').addEventListener('click', async () => 
 const settingsModal = document.getElementById('song-settings-modal');
 
 function openSongSettings(idx) {
-    editingSongIndex = idx; const s = playlist[idx];
-    document.getElementById('settings-song-name').value = s.name;
-    document.getElementById('settings-start-time').value = s.startTime || 0;
-    document.getElementById('settings-end-time').value = s.endTime || 0;
+    if (idx < 0 || !playlist[idx]) return;
+    editingSongIndex = idx;
+    const song = playlist[idx];
+    document.getElementById('settings-song-name').value = song.name;
+    document.getElementById('settings-start-time').value = song.startTime || 0;
+    document.getElementById('settings-end-time').value = song.endTime || 0;
     settingsModal.style.display = 'flex';
 }
 
-async function saveSongSettings() {
-    if (editingSongIndex === -1) return;
-    const s = playlist[editingSongIndex];
-    let st = parseFloat(document.getElementById('settings-start-time').value) || 0;
-    let en = parseFloat(document.getElementById('settings-end-time').value) || 0;
-    if (en > 0 && en <= st) { showToast('Kết thúc phải lớn hơn bắt đầu'); en = 0; }
-    s.startTime = st; s.endTime = en;
-    try { const db = await openDB(); const tx = db.transaction(STORE_NAME,'readwrite'); const store = tx.objectStore(STORE_NAME); const r = store.get(s.id); r.onsuccess = () => { if (r.result) { r.result.startTime = st; r.result.endTime = en; store.put(r.result); } }; } catch(e){}
-    if (editingSongIndex === currentIndex) { const el = getEl(); if (el.src) { if (el.currentTime < st) el.currentTime = st; if (en > 0 && el.currentTime >= en) { loopMode ? el.currentTime = st : nextSong(); } } }
-    showToast(`Đã lưu: "${s.name}"`); settingsModal.style.display = 'none'; editingSongIndex = -1;
+function updateSongInDB(id, patch) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        let found = false;
+        const request = store.get(id);
+        request.onsuccess = () => {
+            if (!request.result) { tx.abort(); return; }
+            found = true;
+            store.put({ ...request.result, ...patch });
+        };
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+        tx.onabort = () => { db.close(); reject(found ? tx.error : new Error('Không tìm thấy bài hát')); };
+    }));
 }
+
+async function saveSongSettings() {
+    if (editingSongIndex < 0 || savingSongSettings) return;
+    const song = playlist[editingSongIndex];
+    if (!song) return;
+    const newName = document.getElementById('settings-song-name').value.trim();
+    const start = Number(document.getElementById('settings-start-time').value);
+    const end = Number(document.getElementById('settings-end-time').value);
+    if (!newName) { showToast('Tên bài hát không được để trống'); return; }
+    if (!Number.isFinite(start) || start < 0 || !Number.isFinite(end) || end < 0 || (end > 0 && end <= start)) {
+        showToast('Thời gian bắt đầu/kết thúc không hợp lệ');
+        return;
+    }
+    savingSongSettings = true;
+    const saveButton = document.getElementById('save-settings-btn');
+    saveButton.disabled = true;
+    try {
+        await updateSongInDB(song.id, { name: newName, startTime: start, endTime: end });
+        song.name = newName;
+        song.startTime = start;
+        song.endTime = end;
+        const liveIndex = playlist.findIndex(s => s.id === song.id);
+        if (liveIndex === currentIndex) {
+            songTitleDisplay.innerText = newName;
+            setupMediaSession(song);
+            const el = getEl();
+            if (el.src) {
+                if (el.currentTime < start) el.currentTime = start;
+                if (end > 0 && el.currentTime >= end) {
+                    if (loopMode) el.currentTime = start;
+                    else nextSong();
+                }
+            }
+        }
+        settingsModal.style.display = 'none';
+        editingSongIndex = -1;
+        updatePlaylistUI();
+        showToast('Đã lưu tên và cài đặt bài hát');
+    } catch (error) {
+        console.error('Save song settings:', error);
+        showToast('Không thể lưu thay đổi');
+    } finally {
+        savingSongSettings = false;
+        saveButton.disabled = false;
+    }
+}
+
 
 async function deleteCurrentSong() {
     if (editingSongIndex === -1) return;
@@ -853,6 +1129,10 @@ async function deleteCurrentSong() {
     if (!playlist.length) { cancelTransitions(); audio.pause(); audio.src = ''; audio2.pause(); audio2.src = ''; setGain(gainNode, 0); setGain(gainNode2, 0); isPlaying = false; currentIndex = 0; songTitleDisplay.innerText = 'Chọn bài hát'; updatePlayPauseUI(); }
     else { if (editingSongIndex < currentIndex) currentIndex--; else if (editingSongIndex === currentIndex) { if (currentIndex >= playlist.length) currentIndex = playlist.length - 1; if (currentIndex >= 0) loadSongWithFade(currentIndex, true); } }
     settingsModal.style.display = 'none'; editingSongIndex = -1; updatePlaylistUI();
+    if (playlist.length) persistPlaylistOrder();
+    const currentSong = playlist[currentIndex];
+    if (currentSong) localStorage.setItem('nmc_song_id', currentSong.id);
+    else localStorage.removeItem('nmc_song_id');
 }
 
 document.getElementById('close-settings-modal').addEventListener('click', () => { settingsModal.style.display = 'none'; editingSongIndex = -1; });
@@ -1040,6 +1320,7 @@ function showLoading(s) { document.getElementById('loading-overlay').classList.t
 
 // ===================== Init =====================
 async function initApp() {
+    let songsForCache = null;
     const sv = localStorage.getItem('nmc_vol');
     if (sv !== null) { currentVolume = parseFloat(sv); if (isNaN(currentVolume)) currentVolume = 0.5; }
     const sl = localStorage.getItem('nmc_loop');
@@ -1052,28 +1333,41 @@ async function initApp() {
     try {
         const saved = await getAllSongsFromDB();
         if (saved.length) {
-            playlist = saved.map(s => ({ id:s.id, name:s.name, startTime:s.startTime||0, endTime:s.endTime||0, fileSize:s.fileSize||0, fileType:s.fileType||'' }));
+            songsForCache = saved;
+            // Existing libraries without an order field retain their original order.
+            playlist = saved.map((s, i) => ({
+                id:s.id, name:s.name, startTime:s.startTime||0, endTime:s.endTime||0,
+                fileSize:s.fileSize||0, fileType:s.fileType||'',
+                order:Number.isFinite(s.order) ? s.order : i
+            })).sort((a, b) => a.order - b.order);
             showToast(`Đã tải ${playlist.length} bài hát`);
-
-            // Preload all ObjectURLs into cache in background — no delay when playing
-            preloadAllURLs(saved);
         }
     } catch(e) { console.error(e); }
 
     setVolume(currentVolume);
+    const songId = localStorage.getItem('nmc_song_id');
+    const savedIdIndex = songId ? playlist.findIndex(s => s.id === songId) : -1;
+    const indexFromStorage = Number.parseInt(localStorage.getItem('nmc_idx') || '0', 10);
+    currentIndex = savedIdIndex >= 0 ? savedIdIndex : (indexFromStorage >= 0 && indexFromStorage < playlist.length ? indexFromStorage : 0);
+    if (playlist[currentIndex]) songTitleDisplay.innerText = playlist[currentIndex].name;
     updatePlaylistUI();
+    if (songsForCache) preloadAllURLs(songsForCache);
 
-    const si = localStorage.getItem('nmc_idx');
-    if (si !== null) { const idx = parseInt(si); if (idx >= 0 && idx < playlist.length) { currentIndex = idx; songTitleDisplay.innerText = playlist[currentIndex].name; } }
-
-    setInterval(() => { localStorage.setItem('nmc_vol', currentVolume); localStorage.setItem('nmc_loop', loopMode); localStorage.setItem('nmc_idx', currentIndex); }, 2000);
+    setInterval(() => {
+        localStorage.setItem('nmc_vol', currentVolume);
+        localStorage.setItem('nmc_loop', loopMode);
+        localStorage.setItem('nmc_idx', String(currentIndex));
+        if (playlist[currentIndex]) localStorage.setItem('nmc_song_id', playlist[currentIndex].id);
+    }, 2000);
 }
 
 // Preload all song blobs into ObjectURL cache — plays instantly after
 async function preloadAllURLs(savedSongs) {
     // Prioritize current song first, then the rest
     const si = localStorage.getItem('nmc_idx');
-    const curIdx = si !== null ? parseInt(si) : 0;
+    const currentId = playlist[currentIndex]?.id;
+    const selectedIdx = savedSongs.findIndex(s => s.id === currentId);
+    const curIdx = selectedIdx >= 0 ? selectedIdx : (si !== null ? parseInt(si) : 0);
     const order = [];
     if (curIdx >= 0 && curIdx < savedSongs.length) order.push(curIdx);
     for (let i = 0; i < savedSongs.length; i++) { if (i !== curIdx) order.push(i); }
@@ -1092,6 +1386,7 @@ initApp();
 
 // ===================== Keyboard (chỉ giữ Play/Pause + Volume) =====================
 document.addEventListener('keydown', e => {
+    if (e.target.closest('input,textarea,button,[contenteditable="true"]')) return;
     switch(e.code) {
         case 'Space': e.preventDefault(); isPlaying ? pauseAudio() : playAudio(); break;
         case 'ArrowUp': e.preventDefault(); setVolume(currentVolume + .05); break;
