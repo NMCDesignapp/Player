@@ -254,12 +254,13 @@ let audio = new Audio(); audio.preload = 'auto';
 let audio2 = new Audio(); audio2.preload = 'auto';
 let audioContext = null, analyser = null;
 let sourceNode = null, sourceNode2 = null;
-let gainNode = null, gainNode2 = null;
+let gainNode = null, gainNode2 = null, masterGain = null;
 let activeAudio = 'audio'; // 'audio' or 'audio2'
 let ringCtx = null, barsArray = [];
 let systemVolumeLinked = true, currentVolume = 0.5;
 let editingSongIndex = -1;
-let fadeAnimationId = null, isFading = false, isSwitchingSong = false;
+let playbackToken = 0, isSwitchingSong = false, pendingSongIndex = null;
+const transitionTimers = new Set(), gainEnvelopes = new Map();
 let deferredPrompt = null;
 function getEl() { return activeAudio === 'audio' ? audio : audio2; }
 function getEl2() { return activeAudio === 'audio' ? audio2 : audio; }
@@ -301,27 +302,32 @@ ringCtx = ringCanvas.getContext('2d');
 
 for (let i = 0; i < 32; i++) { const b = document.createElement('div'); b.classList.add('visual-bar'); document.getElementById('visualizerBars').appendChild(b); barsArray.push(b); }
 
-// ===================== Audio Context + Dual GainNode (Crossfade) =====================
+// ===================== Audio Context + independent master volume =====================
 function setupAudioContext() {
     if (audioContext && audioContext.state !== 'closed') return;
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 128;
     analyser.smoothingTimeConstant = 0.8;
-    // Player 1
+    // Per-track gain is always 0..1; the master slider is applied AFTER mixing.
     gainNode = audioContext.createGain();
-    gainNode.gain.value = activeAudio === 'audio' ? currentVolume : 0;
+    gainNode.gain.value = 0;
     sourceNode = audioContext.createMediaElementSource(audio);
     sourceNode.connect(gainNode);
     gainNode.connect(analyser);
-    // Player 2
+
     gainNode2 = audioContext.createGain();
-    gainNode2.gain.value = activeAudio === 'audio2' ? currentVolume : 0;
+    gainNode2.gain.value = 0;
     sourceNode2 = audioContext.createMediaElementSource(audio2);
     sourceNode2.connect(gainNode2);
     gainNode2.connect(analyser);
-    analyser.connect(audioContext.destination);
-    if (audioContext.state === 'suspended') audioContext.resume();
+
+    masterGain = audioContext.createGain();
+    masterGain.gain.value = currentVolume;
+    analyser.connect(masterGain);
+    masterGain.connect(audioContext.destination);
+    audio.volume = audio2.volume = 1;
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
 }
 
 // ===================== Volume =====================
@@ -342,16 +348,19 @@ function buildLEDs() { ledContainer.innerHTML = ''; for (let i = 0; i < 10; i++)
 buildLEDs();
 
 function setVolume(v) {
-    v = Math.min(1, Math.max(0, v));
-    currentVolume = v;
-    const gn = getGN();
-    if (gn && audioContext) {
-        // Cancel any running ramps and set volume immediately
-        gn.gain.cancelScheduledValues(audioContext.currentTime);
-        gn.gain.setValueAtTime(Math.max(v, 0.0001), audioContext.currentTime);
+    currentVolume = Math.min(1, Math.max(0, Number(v) || 0));
+    if (audioContext && masterGain) {
+        const now = audioContext.currentTime;
+        masterGain.gain.cancelScheduledValues(now);
+        masterGain.gain.setValueAtTime(currentVolume, now);
+    } else {
+        // Fallback for browsers without Web Audio support.
+        audio.volume = audio2.volume = currentVolume;
     }
     updateVolumeUI();
 }
+
+
 
 sysVolBadge.addEventListener('click', () => {
     systemVolumeLinked = !systemVolumeLinked;
@@ -370,207 +379,262 @@ volumeSidebar.addEventListener('touchstart', e => { isDraggingVol = true; handle
 window.addEventListener('touchmove', e => { if (isDraggingVol && e.touches.length) handleVolMove(e.touches[0].clientY); });
 window.addEventListener('touchend', () => { isDraggingVol = false; });
 
-// ===================== Crossfade (Dual Audio + GainNode) =====================
-// Uses Web Audio API exponentialRampToValueAtTime for sample-accurate,
-// click-free, perceptually smooth fade transitions.
-const FADE_OUT_DURATION = 1.5;  // seconds — bài cũ nhỏ dần
-const FADE_IN_DURATION = 2.0;   // seconds — bài mới lớn dần
-const FADE_PLAY_DELAY = 0.15;   // seconds — delay before new song starts (overlap)
+// ===================== Audio transitions (sample-accurate, linear) =====================
+// The user volume stays on masterGain. Each player ramps 0..1 independently.
+const FADE_IN_DURATION = 2.5;        // 0% -> 100% in 2.5 seconds
+const FADE_PAUSE_DURATION = 2.0;     // fade out when paused
+const FADE_TO_THIRTY_DURATION = 0.9; // old track first ducks to 30%
+const FADE_OLD_TAIL_DURATION = 2.0;  // old track fades 30% -> 0%
 
-function cancelFade() {
-    if (fadeAnimationId) { cancelAnimationFrame(fadeAnimationId); fadeAnimationId = null; }
-    // Cancel any pending Web Audio ramps on both gain nodes
-    if (audioContext) {
-        const now = audioContext.currentTime;
-        [gainNode, gainNode2].forEach(gn => {
-            if (gn) {
-                gn.gain.cancelScheduledValues(now);
-                // Hold current value (don't ramp to zero — caller will set new ramps)
-            }
-        });
-    }
-    isFading = false;
-    isSwitchingSong = false;  // Allow new song switches
+function gainAt(gn) {
+    if (!gn || !audioContext) return 0;
+    const env = gainEnvelopes.get(gn);
+    if (!env) return gn.gain.value;
+    const p = Math.min(1, Math.max(0, (audioContext.currentTime - env.start) / env.duration));
+    return env.from + (env.to - env.from) * p;
 }
 
-// Smooth ramp on a specific GainNode using Web Audio API scheduling
-function rampGain(gn, fromVal, toVal, duration, startTime) {
+function setGain(gn, value) {
     if (!gn || !audioContext) return;
-    const now = startTime || audioContext.currentTime;
+    const now = audioContext.currentTime;
     gn.gain.cancelScheduledValues(now);
-    gn.gain.setValueAtTime(Math.max(fromVal, 0.0001), now);
-    // exponentialRamp sounds natural (perceptual loudness is logarithmic)
-    gn.gain.exponentialRampToValueAtTime(Math.max(toVal, 0.0001), now + duration);
+    gn.gain.setValueAtTime(value, now);
+    gainEnvelopes.delete(gn);
 }
 
-// ObjectURL cache - avoids re-reading IndexedDB every switch
+function holdGain(gn) {
+    if (!gn || !audioContext) return 0;
+    const value = gainAt(gn);
+    setGain(gn, value);
+    return value;
+}
+
+function rampGain(gn, target, seconds) {
+    if (!gn || !audioContext) return;
+    const from = holdGain(gn);
+    if (seconds <= 0) { setGain(gn, target); return; }
+    const now = audioContext.currentTime;
+    gn.gain.linearRampToValueAtTime(target, now + seconds);
+    gainEnvelopes.set(gn, { from, to: target, start: now, duration: seconds });
+}
+
+// All delayed transitions are owned by a token. The most recent action wins.
+function cancelTransitions() {
+    playbackToken++;
+    for (const timer of transitionTimers) clearTimeout(timer);
+    transitionTimers.clear();
+    holdGain(gainNode);
+    holdGain(gainNode2);
+    isSwitchingSong = false;
+    pendingSongIndex = null;
+    return playbackToken;
+}
+
+function scheduleTransition(callback, delayMs, token) {
+    const timer = setTimeout(() => {
+        transitionTimers.delete(timer);
+        if (token === playbackToken) callback();
+    }, delayMs);
+    transitionTimers.add(timer);
+}
+
+function updateActiveSong(index, song) {
+    currentIndex = index;
+    nextSongPreloaded = false;
+    songTitleDisplay.innerText = song.name;
+    updatePlayPauseUI();
+    updatePlaylistUI();
+    setupMediaSession(song);
+    const el = getEl();
+    if (el.duration && isFinite(el.duration)) durationSpan.innerText = formatTime(el.duration);
+}
+
+// Object URLs are cached so switching does not read a large Blob on every click.
 const urlCache = new Map();
 
-async function loadSongAudioInto(el, song) {
-    // Check cache first - much faster
-    if (urlCache.has(song.id)) {
-        el.src = urlCache.get(song.id);
-        el.load();
-        return;
-    }
+async function getSongURL(song) {
+    if (urlCache.has(song.id)) return urlCache.get(song.id);
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readonly');
         const req = tx.objectStore(STORE_NAME).get(song.id);
         req.onsuccess = () => {
-            if (req.result?.blob) {
-                const url = URL.createObjectURL(req.result.blob);
-                urlCache.set(song.id, url);
-                el.src = url;
-                el.load();
-                resolve();
-            } else reject('No data');
+            if (!req.result?.blob) { reject(new Error('Audio data not found')); return; }
+            if (!urlCache.has(song.id)) urlCache.set(song.id, URL.createObjectURL(req.result.blob));
+            resolve(urlCache.get(song.id));
         };
         req.onerror = () => reject(req.error);
     });
 }
 
-let crossfadeCleanupId = null;
+function waitForCanPlay(el) {
+    if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const cleanup = () => {
+            el.removeEventListener('canplay', ready);
+            el.removeEventListener('error', failed);
+            el.removeEventListener('abort', aborted);
+        };
+        const ready = () => { cleanup(); resolve(); };
+        const failed = () => { cleanup(); reject(el.error || new Error('Audio decode error')); };
+        const aborted = () => { cleanup(); reject(new Error('Audio load interrupted')); };
+        el.addEventListener('canplay', ready);
+        el.addEventListener('error', failed);
+        el.addEventListener('abort', aborted);
+        if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) ready();
+    });
+}
 
-function loadSongWithFade(index, autoPlay = true) {
-    if (!playlist[index] || isSwitchingSong) return;
-    isSwitchingSong = true;
-    cancelFade();
-    // Cancel any pending crossfade cleanup
-    if (crossfadeCleanupId) { clearTimeout(crossfadeCleanupId); crossfadeCleanupId = null; }
-
-    const oldEl = getEl();
-    const newEl = getEl2();
-    const oldGain = getGN();
-    const newGain = getGN2();
+async function loadSongWithFade(index, autoPlay = true) {
     const song = playlist[index];
-    const hasCurrentAudio = oldEl.src && oldEl.readyState > 0 && isPlaying;
+    if (!song) return;
+    // Never lock out rapid Next/Previous clicks. Stale asynchronous loads are ignored.
+    const token = cancelTransitions();
+    isSwitchingSong = true;
+    pendingSongIndex = index;
 
-    // ===== IMMEDIATELY start fading out old song (no waiting for load) =====
-    const oldStartVol = oldGain && audioContext ? oldGain.gain.value : currentVolume;
-    if (hasCurrentAudio && oldGain && audioContext) {
-        rampGain(oldGain, oldStartVol, 0.0001, FADE_OUT_DURATION);
-    }
+    try {
+        setupAudioContext();
+        if (audioContext?.state === 'suspended') audioContext.resume().catch(() => {});
+    } catch (e) { console.error('AudioContext:', e); }
 
-    loadSongAudioInto(newEl, song).then(() => {
-        currentIndex = index;
-        nextSongPreloaded = false;
-        songTitleDisplay.innerText = song.name;
+    const oldEl = getEl(), newEl = getEl2();
+    const oldGain = getGN(), newGain = getGN2();
+    const oldPlaying = isPlaying && !oldEl.paused && !!(oldEl.currentSrc || oldEl.src);
 
-        // No current audio playing → simple fade in (first song or after stop)
-        if (!hasCurrentAudio || !audioContext) {
+    // Reuse the inactive deck, never cut off the currently audible deck.
+    newEl.pause();
+    setGain(newGain, 0);
+
+    try {
+        const url = await getSongURL(song);
+        if (token !== playbackToken) return;
+        if (newEl.src !== url) {
+            newEl.src = url;
+            newEl.load();
+        }
+        await waitForCanPlay(newEl);
+        if (token !== playbackToken) return;
+        const start = Math.max(0, Number(song.startTime) || 0);
+        if (start > 0 && (!isFinite(newEl.duration) || start < newEl.duration)) {
+            newEl.currentTime = start;
+        } else {
+            newEl.currentTime = 0;
+        }
+
+        if (!autoPlay) {
+            oldEl.pause();
+            setGain(oldGain, 0);
             activeAudio = activeAudio === 'audio' ? 'audio2' : 'audio';
-            const gn = getGN();
-            if (gn && audioContext) {
-                gn.gain.cancelScheduledValues(audioContext.currentTime);
-                gn.gain.setValueAtTime(0.0001, audioContext.currentTime);
-            }
-            if (autoPlay) {
-                newEl.play().then(() => {
-                    isPlaying = true; updatePlayPauseUI(); updatePlaylistUI(); setupMediaSession(song);
-                    if (gn && audioContext) {
-                        rampGain(gn, 0.0001, currentVolume, FADE_IN_DURATION);
-                    }
-                    if (audioContext?.state === 'suspended') audioContext.resume();
-                    // Mark switching done after fade-in
-                    crossfadeCleanupId = setTimeout(() => { isSwitchingSong = false; crossfadeCleanupId = null; }, FADE_IN_DURATION * 1000);
-                }).catch(e => { console.log(e); isSwitchingSong = false; });
-            } else { isSwitchingSong = false; }
-            updatePlaylistUI();
-            newEl.addEventListener('canplaythrough', function h() {
-                newEl.removeEventListener('canplaythrough', h);
-                if (newEl.duration && isFinite(newEl.duration)) {
-                    durationSpan.innerText = formatTime(newEl.duration);
-                    const s = song.startTime || 0;
-                    if (s > 0 && newEl.currentTime < s) newEl.currentTime = s;
-                }
-            });
+            isPlaying = false;
+            isSwitchingSong = false;
+            pendingSongIndex = null;
+            updateActiveSong(index, song);
             return;
         }
 
-        // ===== CROSSFADE: old already fading out, now start new + fade in =====
-        if (autoPlay) {
-            // New song starts at near-zero volume
-            if (newGain && audioContext) {
-                newGain.gain.cancelScheduledValues(audioContext.currentTime);
-                newGain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-            }
-            newEl.play().then(() => {
-                if (audioContext?.state === 'suspended') audioContext.resume();
-
-                // Swap active so UI tracks new song
-                activeAudio = activeAudio === 'audio' ? 'audio2' : 'audio';
-
-                // Fade in new song smoothly
-                if (newGain && audioContext) {
-                    rampGain(newGain, 0.0001, currentVolume, FADE_IN_DURATION);
-                }
-
-                isFading = true;
-
-                // After both fades complete, clean up
-                const maxFade = Math.max(FADE_OUT_DURATION, FADE_IN_DURATION);
-                crossfadeCleanupId = setTimeout(() => {
-                    oldEl.pause(); oldEl.currentTime = 0;
-                    if (oldGain && audioContext) {
-                        oldGain.gain.cancelScheduledValues(audioContext.currentTime);
-                        oldGain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-                    }
-                    isFading = false; fadeAnimationId = null; isSwitchingSong = false;
-                    isPlaying = true;
-                    updatePlayPauseUI(); updatePlaylistUI(); setupMediaSession(song);
-                    crossfadeCleanupId = null;
-                }, maxFade * 1000 + 100);
-
-            }).catch(e => { console.log(e); isSwitchingSong = false; });
-        } else {
+        if (!oldPlaying) {
+            await newEl.play();
+            if (token !== playbackToken) return;
+            oldEl.pause();
+            setGain(oldGain, 0);
             activeAudio = activeAudio === 'audio' ? 'audio2' : 'audio';
-            const gn = getGN();
-            if (gn && audioContext) {
-                gn.gain.cancelScheduledValues(audioContext.currentTime);
-                gn.gain.setValueAtTime(0.0001, audioContext.currentTime);
-            }
+            isPlaying = true;
             isSwitchingSong = false;
-            updatePlaylistUI();
+            pendingSongIndex = null;
+            setGain(newGain, 0);
+            rampGain(newGain, 1, FADE_IN_DURATION);
+            updateActiveSong(index, song);
+            return;
         }
 
-        newEl.addEventListener('canplaythrough', function h() {
-            newEl.removeEventListener('canplaythrough', h);
-            if (newEl.duration && isFinite(newEl.duration)) {
-                durationSpan.innerText = formatTime(newEl.duration);
-                const s = song.startTime || 0;
-                if (s > 0 && newEl.currentTime < s) newEl.currentTime = s;
+        // Only duck after the replacement is buffered: no silence on a slow load.
+        const duckLevel = Math.min(0.3, gainAt(oldGain) * 0.3);
+        rampGain(oldGain, duckLevel, FADE_TO_THIRTY_DURATION);
+        scheduleTransition(async () => {
+            if (token !== playbackToken) return;
+            try {
+                // Start at its true beginning when the old song has reached ~30%.
+                setGain(newGain, 0);
+                await newEl.play();
+                if (token !== playbackToken) return;
+                activeAudio = activeAudio === 'audio' ? 'audio2' : 'audio';
+                isPlaying = true;
+                isSwitchingSong = false;
+                pendingSongIndex = null;
+                rampGain(oldGain, 0, FADE_OLD_TAIL_DURATION);
+                rampGain(newGain, 1, FADE_IN_DURATION);
+                updateActiveSong(index, song);
+                scheduleTransition(() => {
+                    oldEl.pause();
+                    setGain(oldGain, 0);
+                }, FADE_OLD_TAIL_DURATION * 1000 + 30, token);
+            } catch (error) {
+                if (token !== playbackToken) return;
+                console.error('Cannot play next track:', error);
+                rampGain(oldGain, 1, 0.5);
+                isSwitchingSong = false;
+                pendingSongIndex = null;
+                showToast('Không thể phát bài hát đã chọn');
             }
-        });
-    }).catch(e => { console.error(e); isSwitchingSong = false; showToast('Lỗi tải bài hát'); });
+        }, FADE_TO_THIRTY_DURATION * 1000, token);
+    } catch (error) {
+        if (token !== playbackToken) return;
+        console.error('Cannot load track:', error);
+        isSwitchingSong = false;
+        pendingSongIndex = null;
+        showToast('Lỗi tải hoặc giải mã bài hát');
+    }
 }
 
+
+
 // ===================== Playback =====================
-function playAudio() {
+async function playAudio() {
     if (!playlist.length) { showToast('Hãy thêm nhạc trước'); return; }
     const el = getEl();
-    if (!el.src || el.src === location.href) { loadSongWithFade(currentIndex, true); return; }
-    const song = playlist[currentIndex];
-    const s = song.startTime || 0;
-    if (el.readyState >= 2 && el.currentTime < s) el.currentTime = s;
-    const gn = getGN();
-    if (gn && audioContext) {
-        const curVol = gn.gain.value;
-        rampGain(gn, Math.max(curVol, 0.0001), currentVolume, 0.3);
+    if (!el.src || el.src === location.href) {
+        loadSongWithFade(currentIndex, true);
+        return;
     }
-    el.play().then(() => { isPlaying = true; updatePlayPauseUI(); updatePlaylistUI(); setupMediaSession(song); }).catch(e => console.log(e));
-    if (audioContext?.state === 'suspended') audioContext.resume();
+    const token = cancelTransitions();
+    getEl2().pause();
+    setGain(getGN2(), 0);
+    try {
+        setupAudioContext();
+        if (audioContext?.state === 'suspended') audioContext.resume().catch(() => {});
+        const song = playlist[currentIndex];
+        const start = song?.startTime || 0;
+        if (el.readyState >= 2 && el.currentTime < start) el.currentTime = start;
+        await el.play();
+        if (token !== playbackToken) return;
+        isPlaying = true;
+        rampGain(getGN(), 1, FADE_IN_DURATION * (1 - Math.min(1, gainAt(getGN()))));
+        updatePlayPauseUI();
+        updatePlaylistUI();
+        if (song) setupMediaSession(song);
+    } catch (error) {
+        if (token === playbackToken) {
+            console.error('Playback:', error);
+            showToast('Không thể phát bài hát');
+        }
+    }
 }
 
 function pauseAudio() {
-    const gn = getGN();
-    if (gn && audioContext) {
-        const curVol = Math.max(gn.gain.value, 0.0001);
-        rampGain(gn, curVol, 0.0001, 0.4);
-        setTimeout(() => { getEl().pause(); isPlaying = false; updatePlayPauseUI(); updatePlaylistUI(); }, 450);
-    } else {
-        getEl().pause(); isPlaying = false; updatePlayPauseUI(); updatePlaylistUI();
+    const token = cancelTransitions();
+    isPlaying = false;
+    for (const [el, gn] of [[audio, gainNode], [audio2, gainNode2]]) {
+        if (!el.paused) rampGain(gn, 0, FADE_PAUSE_DURATION);
     }
+    updatePlayPauseUI();
+    updatePlaylistUI();
+    scheduleTransition(() => {
+        audio.pause();
+        audio2.pause();
+        setGain(gainNode, 0);
+        setGain(gainNode2, 0);
+    }, FADE_PAUSE_DURATION * 1000 + 30, token);
 }
 
 function updatePlayPauseUI() {
@@ -581,26 +645,41 @@ function updatePlayPauseUI() {
 function nextSong() {
     if (!playlist.length) return;
     const el = getEl();
-    if (loopMode) { const s = playlist[currentIndex].startTime || 0; el.currentTime = s; if (!isPlaying) playAudio(); return; }
-    let n = currentIndex + 1; if (n >= playlist.length) n = 0;
-    loadSongWithFade(n, true);
+    if (loopMode) {
+        const s = playlist[currentIndex].startTime || 0;
+        el.currentTime = s;
+        if (!isPlaying) playAudio();
+        return;
+    }
+    const from = pendingSongIndex ?? currentIndex;
+    loadSongWithFade((from + 1) % playlist.length, true);
 }
 
 function prevSong() {
     if (!playlist.length) return;
     const el = getEl();
-    if (el.currentTime > 3) { const s = playlist[currentIndex].startTime || 0; el.currentTime = s; return; }
-    let n = currentIndex - 1; if (n < 0) n = playlist.length - 1;
-    loadSongWithFade(n, true);
+    if (pendingSongIndex === null && el.currentTime > 3) {
+        el.currentTime = playlist[currentIndex].startTime || 0;
+        return;
+    }
+    const from = pendingSongIndex ?? currentIndex;
+    loadSongWithFade((from - 1 + playlist.length) % playlist.length, true);
 }
 
 function enforceSongBounds() {
-    if (!playlist[currentIndex]) return;
+    if (!playlist[currentIndex] || isSwitchingSong || !isPlaying) return;
     const el = getEl();
-    const s = playlist[currentIndex].startTime || 0, e = playlist[currentIndex].endTime || 0;
-    if (e > 0 && el.currentTime >= e) { if (loopMode) { el.currentTime = s; el.play(); } else { isPlaying = false; nextSong(); } return; }
+    const s = playlist[currentIndex].startTime || 0;
+    const end = playlist[currentIndex].endTime || 0;
+    if (end > 0 && el.currentTime >= end) {
+        if (loopMode) { el.currentTime = s; el.play(); }
+        else nextSong();
+        return;
+    }
     if (el.currentTime < s) el.currentTime = s;
 }
+
+
 
 // ===================== Media Session =====================
 function setupMediaSession(song) {
@@ -683,7 +762,7 @@ function onTimeUpdate() {
 }
 function onEnded() {
     const el = getEl();
-    if (this !== el) return;
+    if (this !== el || isSwitchingSong || !isPlaying) return;
     if (loopMode) { el.currentTime = playlist[currentIndex]?.startTime || 0; el.play(); } else {
         // When song ends naturally, start next with fade-in only (no fade-out needed, song already ended)
         isPlaying = false;
@@ -770,7 +849,7 @@ async function deleteCurrentSong() {
     const rm = playlist.splice(editingSongIndex, 1)[0];
     try { await deleteSongFromDB(rm.id); if (urlCache.has(rm.id)) { URL.revokeObjectURL(urlCache.get(rm.id)); urlCache.delete(rm.id); } } catch(e){}
     showToast(`Đã xoá "${rm.name}"`);
-    if (!playlist.length) { audio.pause(); audio.src = ''; audio2.pause(); audio2.src = ''; isPlaying = false; currentIndex = 0; songTitleDisplay.innerText = 'Chọn bài hát'; updatePlayPauseUI(); }
+    if (!playlist.length) { cancelTransitions(); audio.pause(); audio.src = ''; audio2.pause(); audio2.src = ''; setGain(gainNode, 0); setGain(gainNode2, 0); isPlaying = false; currentIndex = 0; songTitleDisplay.innerText = 'Chọn bài hát'; updatePlayPauseUI(); }
     else { if (editingSongIndex < currentIndex) currentIndex--; else if (editingSongIndex === currentIndex) { if (currentIndex >= playlist.length) currentIndex = playlist.length - 1; if (currentIndex >= 0) loadSongWithFade(currentIndex, true); } }
     settingsModal.style.display = 'none'; editingSongIndex = -1; updatePlaylistUI();
 }
