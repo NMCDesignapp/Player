@@ -157,6 +157,7 @@
         .song-btn.playing .song-action-btn{background:rgba(0,0,0,.22);border-color:rgba(150,245,255,.22);color:#f0ffff}
         .song-action-btn:focus-visible,.song-play-button:focus-visible,.song-drag-handle:focus-visible{outline:2px solid #21e1f2;outline-offset:0}
         .volume-sidebar{width:70px;min-width:70px;padding:8px 0}
+        #song-settings-modal .modal-content{max-height:90dvh;overflow-y:auto}
         .led-container{width:32px}
         @media(max-width:620px){
             .app-container{padding:6px;gap:6px}
@@ -263,6 +264,10 @@
         <div class="input-group">
             <label><i class="fas fa-tag"></i> Tên bài</label>
             <input type="text" id="settings-song-name" maxlength="120" placeholder="Nhập tên bài hát">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-list-ol"></i> Vị trí trong danh sách</label>
+            <input type="number" id="settings-song-order" min="1" step="1" value="1">
         </div>
         <div class="input-group">
             <label><i class="fas fa-play-circle"></i> Bắt đầu (giây)</label>
@@ -1054,6 +1059,9 @@ function openSongSettings(idx) {
     editingSongIndex = idx;
     const song = playlist[idx];
     document.getElementById('settings-song-name').value = song.name;
+    const orderInput = document.getElementById('settings-song-order');
+    orderInput.max = String(playlist.length);
+    orderInput.value = String(idx + 1);
     document.getElementById('settings-start-time').value = song.startTime || 0;
     document.getElementById('settings-end-time').value = song.endTime || 0;
     settingsModal.style.display = 'flex';
@@ -1081,9 +1089,14 @@ async function saveSongSettings() {
     const song = playlist[editingSongIndex];
     if (!song) return;
     const newName = document.getElementById('settings-song-name').value.trim();
+    const desiredPosition = Number(document.getElementById('settings-song-order').value);
     const start = Number(document.getElementById('settings-start-time').value);
     const end = Number(document.getElementById('settings-end-time').value);
     if (!newName) { showToast('Tên bài hát không được để trống'); return; }
+    if (!Number.isInteger(desiredPosition) || desiredPosition < 1 || desiredPosition > playlist.length) {
+        showToast('Vị trí phải từ 1 đến ' + playlist.length);
+        return;
+    }
     if (!Number.isFinite(start) || start < 0 || !Number.isFinite(end) || end < 0 || (end > 0 && end <= start)) {
         showToast('Thời gian bắt đầu/kết thúc không hợp lệ');
         return;
@@ -1111,8 +1124,12 @@ async function saveSongSettings() {
         }
         settingsModal.style.display = 'none';
         editingSongIndex = -1;
-        updatePlaylistUI();
-        showToast('Đã lưu tên và cài đặt bài hát');
+        if (liveIndex >= 0 && liveIndex !== desiredPosition - 1) {
+            moveSongTo(liveIndex, desiredPosition - 1);
+        } else {
+            updatePlaylistUI();
+        }
+        showToast('Đã lưu tên, vị trí và cài đặt bài hát');
     } catch (error) {
         console.error('Save song settings:', error);
         showToast('Không thể lưu thay đổi');
