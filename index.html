@@ -851,7 +851,9 @@ function updatePlaylistUI() {
         head.className = 'song-card-head';
         const number = document.createElement('span');
         number.className = 'song-order-label';
-        number.textContent = isCurrent ? (isPlaying ? '● ĐANG PHÁT' : '❚❚ TẠM DỪNG') : String(idx + 1).padStart(2, '0');
+        number.textContent = isCurrent
+            ? (isPlaying ? '● ĐANG PHÁT' : (getEl().src ? '❚❚ TẠM DỪNG' : '◉ ĐÃ CHỌN'))
+            : String(idx + 1).padStart(2, '0');
         const handle = document.createElement('span');
         handle.className = 'song-drag-handle';
         handle.draggable = true;
@@ -1386,7 +1388,7 @@ initApp();
 
 // ===================== Keyboard (chỉ giữ Play/Pause + Volume) =====================
 document.addEventListener('keydown', e => {
-    if (e.target.closest('input,textarea,button,[contenteditable="true"]')) return;
+    if (e.target instanceof Element && e.target.closest('input,textarea,button,[contenteditable="true"]')) return;
     switch(e.code) {
         case 'Space': e.preventDefault(); isPlaying ? pauseAudio() : playAudio(); break;
         case 'ArrowUp': e.preventDefault(); setVolume(currentVolume + .05); break;
