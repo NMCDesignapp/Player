@@ -533,7 +533,8 @@ async function loadSongWithFade(index, autoPlay = true) {
             return;
         }
 
-        if (!oldPlaying) {
+        // If the previous song finished while this file was buffering, start immediately.
+        if (!oldPlaying || oldEl.paused) {
             await newEl.play();
             if (token !== playbackToken) return;
             oldEl.pause();
