@@ -101,84 +101,101 @@
         .install-step-text b{color:#fff}
         .install-step-text .highlight{color:#00e676;font-weight:600}
 
-        /* Playlist-first layout: compact visualizer, spacious song grid */
+        /* Full-width equalizer + compact, playlist-first layout */
         .app-container{max-width:1280px;gap:8px;padding:9px}
-        .main-screen{flex:0 0 clamp(210px,29dvh,282px);height:auto}
+        .main-screen{flex:0 0 clamp(195px,25dvh,245px);height:auto;padding:8px 0;display:flex;flex-direction:column;gap:0}
         .signature{top:8px;right:12px;font-size:.6rem}
-        .top-info{top:9px;padding:0 86px}
-        .song-title-display{font-size:clamp(.88rem,1.9vw,1.12rem);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .song-time-display{font-size:.7rem}
-        .visual-full{top:53px;height:88px;padding:0 15%;gap:3px;opacity:.73}
-        .visual-ring{top:95px;width:100px;height:100px;opacity:.3}
-        .full-viz-canvas{opacity:.24}
-        .controls-area{bottom:9px;width:96%;gap:5px}
+        .top-info{position:relative;top:auto;left:auto;width:100%;flex:0 0 auto;padding:0 80px;text-align:center}
+        .song-title-display{font-size:clamp(.85rem,1.9vw,1.1rem);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .song-time-display{font-size:.69rem}
+        .visual-full{
+            position:relative;top:auto;left:auto;
+            width:96%;height:auto;flex:1 1 auto;min-height:24px;
+            margin:8px auto 7px;padding:0 5px;gap:3px;opacity:.93;
+            align-items:flex-end;justify-content:space-between;
+            overflow:hidden;perspective:none;border-bottom:1px solid rgba(33,225,242,.22);
+            background:linear-gradient(180deg,transparent 0%,rgba(30,196,220,.03) 75%,rgba(16,128,174,.08) 100%);
+            border-radius:7px 7px 3px 3px
+        }
+        .visual-bar{
+            flex:1 1 0;max-width:none;min-width:0;
+            border-radius:3px 3px 1px 1px;
+            transition:height .075s linear,background-color .11s linear;
+            box-shadow:0 0 5px rgba(0,205,237,.12)
+        }
+        .visual-ring{display:none}
+        .full-viz-canvas{opacity:.15}
+        .controls-area{position:relative;left:auto;bottom:auto;transform:none;margin:0 auto;width:96%;flex:0 0 auto;gap:5px}
         .progress-wrapper{padding:6px 11px;min-height:32px;border-radius:10px}
         .control-row{height:47px;border-radius:10px;padding:4px}
         .bottom-area{flex:1;min-height:0;height:auto;gap:8px}
         .playlist-container{
-            min-width:0;min-height:0;padding:10px;gap:9px;
+            min-width:0;min-height:0;padding:9px;gap:8px;
             grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
-            grid-auto-rows:126px;align-content:start;overscroll-behavior:contain;
+            grid-auto-rows:96px;align-content:start;overscroll-behavior:contain
         }
         .song-btn{
-            display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
-            padding:8px;gap:5px;min-width:0;overflow:hidden;border-radius:12px;
-            background:linear-gradient(145deg,#202038,#11111e);
+            position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
+            padding:7px 8px;gap:3px;min-width:0;overflow:hidden;border-radius:10px;
+            background:linear-gradient(145deg,#202038,#11111e)
         }
         .song-btn.playing{
             background:linear-gradient(145deg,#11647a,#083b57 68%,#132841);
             border:1.5px solid #21e1f2;
             box-shadow:0 0 0 1px rgba(33,225,242,.1),0 0 18px rgba(0,200,255,.17);
-            animation:none;color:#fff;
+            animation:none;color:#fff
         }
         .song-btn.selected:not(.playing){border-color:rgba(33,225,242,.55);background:linear-gradient(145deg,#20364b,#161e2e);color:#d6f9ff}
         .song-btn.drag-target{outline:2px dashed #21e1f2;outline-offset:-4px}
         .song-btn.dragging{opacity:.55}
-        .song-card-head{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:19px}
-        .song-order-label{font-size:.66rem;letter-spacing:.3px;color:#94a4ba;font-weight:700}
+        .song-card-head{display:flex;align-items:center;justify-content:space-between;gap:5px;flex:0 0 26px;min-height:26px}
+        .song-settings-trigger{
+            width:26px;height:26px;min-width:26px;border:1px solid rgba(255,255,255,.14);
+            border-radius:7px;color:#b0f3fa;background:rgba(0,0,0,.24);cursor:pointer;
+            display:flex;align-items:center;justify-content:center;font-size:.8rem
+        }
+        .song-settings-trigger:active{background:rgba(33,225,242,.24)}
+        .song-order-label{font-size:.64rem;letter-spacing:.25px;color:#9eacc4;font-weight:700;text-align:center;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .song-btn.playing .song-order-label{color:#80fbff}
-        .song-drag-handle{border:0;background:transparent;color:#95a8b8;padding:0 6px;font-size:.85rem;cursor:grab;touch-action:none}
+        .song-drag-handle{background:transparent;border:0;color:#95a8b8;padding:0 2px;font-size:.83rem;cursor:grab;flex:0 0 22px;text-align:right;touch-action:none}
         .song-drag-handle:active{cursor:grabbing}
         .song-play-button{
             display:flex;align-items:center;justify-content:center;width:100%;flex:1;min-height:0;
             background:transparent;border:0;color:inherit;cursor:pointer;padding:0 2px;
-            font:inherit;overflow:hidden;
+            font:inherit;overflow:hidden
         }
-        .song-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;word-break:break-word;font-size:.9rem;line-height:1.35;font-weight:700;text-align:center}
-        .song-card-actions{display:flex;gap:5px;align-items:center;justify-content:stretch;min-height:29px}
-        .song-action-btn{
-            background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.1);
-            border-radius:7px;flex:1;height:29px;min-width:0;cursor:pointer;color:#d7dce7;
-            font:inherit;font-size:.8rem;display:flex;align-items:center;justify-content:center;gap:5px;
-        }
-        .song-action-btn:disabled{opacity:.25;cursor:default}
-        .song-action-btn:not(:disabled):active{background:rgba(33,225,242,.22);color:#fff}
-        .song-action-edit{flex:1.35;color:#a3f1fb}
-        .song-btn.playing .song-action-btn{background:rgba(0,0,0,.22);border-color:rgba(150,245,255,.22);color:#f0ffff}
-        .song-action-btn:focus-visible,.song-play-button:focus-visible,.song-drag-handle:focus-visible{outline:2px solid #21e1f2;outline-offset:0}
+        .song-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;word-break:break-word;font-size:.88rem;line-height:1.3;font-weight:700;text-align:center}
+        .song-settings-trigger:focus-visible,.song-play-button:focus-visible,.song-drag-handle:focus-visible{outline:2px solid #21e1f2;outline-offset:1px}
         .volume-sidebar{width:70px;min-width:70px;padding:8px 0}
-        #song-settings-modal .modal-content{max-height:90dvh;overflow-y:auto}
         .led-container{width:32px}
+        #song-settings-modal .modal-content{max-height:90dvh;overflow-y:auto}
+        .modal-order-row{display:flex;gap:7px;align-items:stretch}
+        .modal-order-row input{flex:1;min-width:0;text-align:center}
+        .order-shift-btn{
+            width:42px;min-width:42px;border:1px solid rgba(33,225,242,.24);
+            border-radius:8px;background:rgba(33,225,242,.09);
+            color:#b1eff9;font-size:.85rem;cursor:pointer
+        }
+        .order-shift-btn:disabled{opacity:.32;cursor:default}
+        .order-hint{display:block;margin-top:5px;color:#97a4bd;font-size:.7rem;line-height:1.35}
         @media(max-width:620px){
             .app-container{padding:6px;gap:6px}
-            .main-screen{flex-basis:clamp(200px,28dvh,245px)}
-            .top-info{padding:0 62px}
-            .signature{top:8px;right:8px;font-size:.53rem}
-            .visual-full{top:50px;height:65px;padding:0 10%}
-            .visual-ring{width:75px;height:75px;top:83px}
-            .controls-area{width:98%;bottom:6px;gap:4px}
-            .control-row{height:44px}
+            .main-screen{flex-basis:clamp(184px,25dvh,220px);padding:7px 0 6px}
+            .top-info{padding:0 58px}
+            .signature{top:7px;right:8px;font-size:.53rem}
+            .visual-full{width:98%;min-height:24px;padding:0 3px;gap:2px;margin:7px auto 6px}
+            .controls-area{width:98%;gap:4px}
+            .control-row{height:42px}
             .progress-wrapper{min-height:29px;padding:4px 8px}
             .bottom-area{flex-direction:column;gap:6px}
-            .playlist-container{flex:1;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:128px;padding:6px;gap:6px}
-            .song-btn{padding:6px;gap:3px}
-            .song-name{font-size:.82rem;line-height:1.3}
-            .song-card-actions{gap:3px}
-            .song-action-btn{height:28px;font-size:.73rem}
-            .song-action-edit{flex:1.1}
+            .playlist-container{flex:1;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:100px;padding:6px;gap:6px}
+            .song-btn{padding:5px 6px;gap:2px}
+            .song-card-head{flex-basis:25px;min-height:25px}
+            .song-settings-trigger{width:25px;height:25px;min-width:25px}
+            .song-name{font-size:.8rem;line-height:1.27}
             .volume-sidebar{
                 flex-shrink:0;width:100%;min-width:0;height:42px;min-height:42px;
-                flex-direction:row;justify-content:space-between;padding:5px 9px;gap:8px;
+                flex-direction:row;justify-content:space-between;padding:5px 9px;gap:8px
             }
             .sys-vol-label{display:none}
             .led-container{flex-direction:row;width:auto;height:11px;flex:1;gap:3px}
@@ -186,11 +203,13 @@
             .vol-percent{font-size:.83rem;margin:0;min-width:46px;text-align:center}
             .sys-vol-badge{flex-shrink:0}
         }
+        @media(max-width:340px){
+            .song-name{font-size:.74rem}
+            .song-order-label{font-size:.6rem}
+        }
         @media(max-height:580px){
-            .main-screen{flex-basis:183px}
-            .visual-full{top:47px;height:51px}
-            .visual-ring{top:69px;width:63px;height:63px}
-            .controls-area{bottom:5px}
+            .main-screen{flex-basis:172px}
+            .visual-full{min-height:18px;margin:4px auto}
             .control-row{height:39px}
             .progress-wrapper{min-height:28px;padding:3px 8px}
         }
@@ -206,7 +225,6 @@
             <div class="song-time-display" id="current-time-display">0:00 / 0:00</div>
         </div>
         <div class="visual-full" id="visualizerBars"></div>
-        <div class="visual-ring"><canvas id="ringCanvas" width="160" height="160"></canvas></div>
         <div class="controls-area">
             <div class="progress-wrapper">
                 <span class="progress-time" id="current-time">0:00</span>
@@ -267,7 +285,12 @@
         </div>
         <div class="input-group">
             <label><i class="fas fa-list-ol"></i> Vị trí trong danh sách</label>
-            <input type="number" id="settings-song-order" min="1" step="1" value="1">
+            <div class="modal-order-row">
+                <button type="button" class="order-shift-btn" id="settings-move-up" title="Đưa bài lên 1 vị trí" aria-label="Đưa bài lên 1 vị trí"><i class="fas fa-arrow-up"></i></button>
+                <input type="number" id="settings-song-order" min="1" step="1" value="1">
+                <button type="button" class="order-shift-btn" id="settings-move-down" title="Đưa bài xuống 1 vị trí" aria-label="Đưa bài xuống 1 vị trí"><i class="fas fa-arrow-down"></i></button>
+            </div>
+            <small class="order-hint">Bấm mũi tên hoặc nhập số thứ tự, sau đó bấm Lưu.</small>
         </div>
         <div class="input-group">
             <label><i class="fas fa-play-circle"></i> Bắt đầu (giây)</label>
@@ -396,9 +419,9 @@ const volPercentSpan = document.getElementById('vol-percent');
 const ledContainer = document.getElementById('led-container');
 const sysVolBadge = document.getElementById('sys-vol-badge');
 const ringCanvas = document.getElementById('ringCanvas');
-ringCtx = ringCanvas.getContext('2d');
+ringCtx = ringCanvas?.getContext('2d') || null;
 
-for (let i = 0; i < 32; i++) { const b = document.createElement('div'); b.classList.add('visual-bar'); document.getElementById('visualizerBars').appendChild(b); barsArray.push(b); }
+for (let i = 0; i < 64; i++) { const b = document.createElement('div'); b.classList.add('visual-bar'); document.getElementById('visualizerBars').appendChild(b); barsArray.push(b); }
 
 // ===================== Audio Context + independent master volume =====================
 function setupAudioContext() {
@@ -854,6 +877,13 @@ function updatePlaylistUI() {
 
         const head = document.createElement('div');
         head.className = 'song-card-head';
+        const settings = document.createElement('button');
+        settings.type = 'button';
+        settings.className = 'song-settings-trigger';
+        settings.title = 'Cài đặt: đổi tên và thứ tự ' + song.name;
+        settings.setAttribute('aria-label', 'Cài đặt bài hát ' + song.name);
+        settings.innerHTML = '<i class="fas fa-cog"></i>';
+        settings.addEventListener('click', () => openSongSettings(playlist.findIndex(s => s.id === song.id)));
         const number = document.createElement('span');
         number.className = 'song-order-label';
         number.textContent = isCurrent
@@ -877,7 +907,7 @@ function updatePlaylistUI() {
             draggedSongId = null;
             document.querySelectorAll('.song-btn.drag-target,.song-btn.dragging').forEach(el => el.classList.remove('drag-target', 'dragging'));
         });
-        head.append(number, handle);
+        head.append(settings, number, handle);
 
         const play = document.createElement('button');
         play.type = 'button';
@@ -897,25 +927,7 @@ function updatePlaylistUI() {
             }
         });
 
-        const actions = document.createElement('div');
-        actions.className = 'song-card-actions';
-        const actionButton = (icon, label, action, disabled, isEdit = false) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'song-action-btn' + (isEdit ? ' song-action-edit' : '');
-            button.title = label + ': ' + song.name;
-            button.setAttribute('aria-label', label + ' ' + song.name);
-            button.disabled = !!disabled;
-            button.innerHTML = '<i class="fas ' + icon + '"></i>' + (isEdit ? '<span>Sửa</span>' : '');
-            button.addEventListener('click', action);
-            return button;
-        };
-        actions.append(
-            actionButton('fa-arrow-up', 'Đưa bài lên', () => moveSongTo(playlist.findIndex(s => s.id === song.id), playlist.findIndex(s => s.id === song.id) - 1), idx === 0),
-            actionButton('fa-pen', 'Sửa tên hoặc cài đặt', () => openSongSettings(playlist.findIndex(s => s.id === song.id)), false, true),
-            actionButton('fa-arrow-down', 'Đưa bài xuống', () => moveSongTo(playlist.findIndex(s => s.id === song.id), playlist.findIndex(s => s.id === song.id) + 1), idx === playlist.length - 1)
-        );
-        card.append(head, play, actions);
+        card.append(head, play);
 
         card.addEventListener('dragover', e => {
             if (draggedSongId && draggedSongId !== song.id) {
@@ -1062,10 +1074,30 @@ function openSongSettings(idx) {
     const orderInput = document.getElementById('settings-song-order');
     orderInput.max = String(playlist.length);
     orderInput.value = String(idx + 1);
+    updateOrderButtons();
     document.getElementById('settings-start-time').value = song.startTime || 0;
     document.getElementById('settings-end-time').value = song.endTime || 0;
     settingsModal.style.display = 'flex';
 }
+
+function updateOrderButtons() {
+    const field = document.getElementById('settings-song-order');
+    const value = Number(field.value);
+    document.getElementById('settings-move-up').disabled = !Number.isInteger(value) || value <= 1;
+    document.getElementById('settings-move-down').disabled = !Number.isInteger(value) || value >= playlist.length;
+}
+
+function shiftSongOrder(delta) {
+    const field = document.getElementById('settings-song-order');
+    const n = Number(field.value);
+    if (!Number.isInteger(n)) return;
+    field.value = String(Math.max(1, Math.min(playlist.length, n + delta)));
+    updateOrderButtons();
+}
+
+document.getElementById('settings-move-up').addEventListener('click', () => shiftSongOrder(-1));
+document.getElementById('settings-move-down').addEventListener('click', () => shiftSongOrder(1));
+document.getElementById('settings-song-order').addEventListener('input', updateOrderButtons);
 
 function updateSongInDB(id, patch) {
     return openDB().then(db => new Promise((resolve, reject) => {
@@ -1277,6 +1309,7 @@ if ('serviceWorker' in navigator) {
 
 // ===================== Visualizers =====================
 let freqData = new Uint8Array(64);
+let barFreqBins = null;
 
 function drawFullVisualizer() {
     if (!analyser) { requestAnimationFrame(drawFullVisualizer); return; }
@@ -1309,13 +1342,16 @@ drawFullVisualizer();
 
 function updateBarsVisualizer() {
     if (!analyser) { requestAnimationFrame(updateBarsVisualizer); return; }
-    const d = new Uint8Array(analyser.frequencyBinCount);
+    if (!barFreqBins || barFreqBins.length !== analyser.frequencyBinCount) {
+        barFreqBins = new Uint8Array(analyser.frequencyBinCount);
+    }
+    const d = barFreqBins;
     analyser.getByteFrequencyData(d);
-    const step = Math.floor(d.length/barsArray.length);
-    for (let i=0;i<barsArray.length;i++) {
-        let v=d[i*step]||0, h=(v/255)*80+4;
-        barsArray[i].style.height=h+'px';
-        barsArray[i].style.backgroundColor=`hsl(${320+(v/255)*40},100%,60%)`;
+    const step = Math.max(1, Math.floor(d.length / barsArray.length));
+    for (let i = 0; i < barsArray.length; i++) {
+        const v = d[Math.min(d.length - 1, i * step)] || 0;
+        barsArray[i].style.height = (Math.max(5, (v / 255) * 100)) + '%';
+        barsArray[i].style.backgroundColor = `hsl(${187 + (v / 255) * 140},96%,${47 + (v / 255) * 16}%)`;
     }
     if (ringCtx) {
         ringCtx.clearRect(0,0,160,160);
