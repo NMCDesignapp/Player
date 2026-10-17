@@ -135,8 +135,9 @@
             grid-auto-rows:96px;align-content:start;overscroll-behavior:contain
         }
         .song-btn{
-            position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
-            padding:7px 8px;gap:3px;min-width:0;overflow:hidden;border-radius:10px;
+            position:relative;display:grid;grid-template-columns:minmax(0,1fr) 28px;
+            grid-template-rows:minmax(0,1fr);align-items:stretch;
+            padding:6px 7px;gap:4px;min-width:0;overflow:hidden;border-radius:10px;
             background:linear-gradient(145deg,#202038,#11111e)
         }
         .song-btn.playing{
@@ -148,23 +149,46 @@
         .song-btn.selected:not(.playing){border-color:rgba(33,225,242,.55);background:linear-gradient(145deg,#20364b,#161e2e);color:#d6f9ff}
         .song-btn.drag-target{outline:2px dashed #21e1f2;outline-offset:-4px}
         .song-btn.dragging{opacity:.55}
-        .song-card-head{display:flex;align-items:center;justify-content:space-between;gap:5px;flex:0 0 26px;min-height:26px}
+        /* Keep the entire tile for the song name; controls are a slim rail at the right */
+        .song-card-head{
+            grid-column:2;grid-row:1;display:flex;flex-direction:column;
+            align-items:center;justify-content:space-between;gap:2px;
+            min-width:0;min-height:0;height:100%;z-index:2
+        }
+        .song-order-label{
+            order:0;display:block;flex:0 0 auto;min-width:0;width:100%;
+            font-size:.7rem;line-height:1.3;letter-spacing:.25px;
+            color:#9eacc4;font-weight:700;text-align:center;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+        }
+        .song-btn.playing .song-order-label{color:#80fbff}
         .song-settings-trigger{
-            width:26px;height:26px;min-width:26px;border:1px solid rgba(255,255,255,.14);
-            border-radius:7px;color:#b0f3fa;background:rgba(0,0,0,.24);cursor:pointer;
-            display:flex;align-items:center;justify-content:center;font-size:.8rem
+            order:1;flex:0 0 auto;width:23px;height:23px;min-width:23px;
+            border:1px solid rgba(255,255,255,.14);border-radius:6px;
+            color:#b0f3fa;background:rgba(0,0,0,.24);cursor:pointer;
+            display:flex;align-items:center;justify-content:center;font-size:.69rem
         }
         .song-settings-trigger:active{background:rgba(33,225,242,.24)}
-        .song-order-label{font-size:.64rem;letter-spacing:.25px;color:#9eacc4;font-weight:700;text-align:center;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .song-btn.playing .song-order-label{color:#80fbff}
-        .song-drag-handle{background:transparent;border:0;color:#95a8b8;padding:0 2px;font-size:.83rem;cursor:grab;flex:0 0 22px;text-align:right;touch-action:none}
+        .song-drag-handle{
+            order:2;flex:0 0 auto;width:24px;height:22px;
+            display:flex;align-items:center;justify-content:center;
+            background:transparent;border:0;color:#95a8b8;padding:0;
+            font-size:.82rem;cursor:grab;touch-action:none
+        }
         .song-drag-handle:active{cursor:grabbing}
         .song-play-button{
-            display:flex;align-items:center;justify-content:center;width:100%;flex:1;min-height:0;
-            background:transparent;border:0;color:inherit;cursor:pointer;padding:0 2px;
-            font:inherit;overflow:hidden
+            grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:center;
+            width:100%;height:100%;min-width:0;min-height:0;
+            background:transparent;border:0;color:inherit;cursor:pointer;
+            padding:2px 3px;font:inherit;overflow:hidden
         }
-        .song-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;word-break:break-word;font-size:.88rem;line-height:1.3;font-weight:700;text-align:center}
+        .song-name{
+            display:-webkit-box;-webkit-box-orient:vertical;
+            -webkit-line-clamp:2;line-clamp:2;overflow:hidden;
+            overflow-wrap:anywhere;word-break:normal;
+            font-size:clamp(1rem,1.45vw,1.18rem);
+            line-height:1.28;font-weight:700;text-align:center;max-width:100%
+        }
         .song-settings-trigger:focus-visible,.song-play-button:focus-visible,.song-drag-handle:focus-visible{outline:2px solid #21e1f2;outline-offset:1px}
         .volume-sidebar{width:70px;min-width:70px;padding:8px 0}
         .led-container{width:32px}
@@ -189,10 +213,10 @@
             .progress-wrapper{min-height:29px;padding:4px 8px}
             .bottom-area{flex-direction:column;gap:6px}
             .playlist-container{flex:1;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:100px;padding:6px;gap:6px}
-            .song-btn{padding:5px 6px;gap:2px}
-            .song-card-head{flex-basis:25px;min-height:25px}
-            .song-settings-trigger{width:25px;height:25px;min-width:25px}
-            .song-name{font-size:.8rem;line-height:1.27}
+            .song-btn{grid-template-columns:minmax(0,1fr) 27px;padding:5px 6px;gap:2px}
+            .song-card-head{gap:2px}
+            .song-settings-trigger{width:22px;height:22px;min-width:22px;font-size:.67rem}
+            .song-name{font-size:clamp(.91rem,3.8vw,1.06rem);line-height:1.27}
             .volume-sidebar{
                 flex-shrink:0;width:100%;min-width:0;height:42px;min-height:42px;
                 flex-direction:row;justify-content:space-between;padding:5px 9px;gap:8px
@@ -204,7 +228,7 @@
             .sys-vol-badge{flex-shrink:0}
         }
         @media(max-width:340px){
-            .song-name{font-size:.74rem}
+            .song-name{font-size:.9rem}
             .song-order-label{font-size:.6rem}
         }
         @media(max-height:580px){
@@ -886,9 +910,8 @@ function updatePlaylistUI() {
         settings.addEventListener('click', () => openSongSettings(playlist.findIndex(s => s.id === song.id)));
         const number = document.createElement('span');
         number.className = 'song-order-label';
-        number.textContent = isCurrent
-            ? (isPlaying ? '● ĐANG PHÁT' : (getEl().src ? '❚❚ TẠM DỪNG' : '◉ ĐÃ CHỌN'))
-            : String(idx + 1).padStart(2, '0');
+        number.textContent = String(idx + 1).padStart(2, '0');
+        number.title = isCurrent ? (isPlaying ? 'Đang phát' : 'Bài đang chọn') : 'Số thứ tự';
         const handle = document.createElement('span');
         handle.className = 'song-drag-handle';
         handle.draggable = true;
@@ -907,7 +930,7 @@ function updatePlaylistUI() {
             draggedSongId = null;
             document.querySelectorAll('.song-btn.drag-target,.song-btn.dragging').forEach(el => el.classList.remove('drag-target', 'dragging'));
         });
-        head.append(settings, number, handle);
+        head.append(number, settings, handle);
 
         const play = document.createElement('button');
         play.type = 'button';
@@ -927,7 +950,7 @@ function updatePlaylistUI() {
             }
         });
 
-        card.append(head, play);
+        card.append(play, head);
 
         card.addEventListener('dragover', e => {
             if (draggedSongId && draggedSongId !== song.id) {
