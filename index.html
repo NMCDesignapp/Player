@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a0f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -537,6 +537,53 @@
             .progress-wrapper{min-height:22px;height:22px}
             .playlist-container{grid-auto-rows:78px}
             .volume-sidebar{flex-basis:40px;min-height:40px;height:40px}
+        }
+
+        /* Android phone + tablet: generous touch targets without wasting playlist space. */
+        @media (pointer:coarse){
+            .song-settings-trigger{width:32px;height:32px;min-width:32px;font-size:.87rem}
+            .song-card-head{justify-content:space-between}
+            .song-drag-handle{width:31px;height:29px;font-size:1rem}
+            .ctrl-btn{touch-action:manipulation}
+            .song-play-button{touch-action:manipulation}
+            .mute-btn{min-width:40px;touch-action:manipulation}
+            #volume-range{touch-action:pan-x}
+            .sys-vol-badge{min-height:34px;touch-action:manipulation}
+        }
+        @media (pointer:coarse) and (min-width:721px) and (max-width:1100px){
+            .app-container{padding:12px 15px 10px;gap:8px}
+            .main-screen{flex-basis:188px}
+            .playlist-container{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:105px;gap:10px}
+            .song-btn{grid-template-columns:minmax(0,1fr) 38px}
+            .song-name{font-size:clamp(.96rem,1.7vw,1.12rem)}
+            .volume-sidebar{flex-basis:53px;min-height:53px}
+        }
+        @media (pointer:coarse) and (max-width:720px){
+            .app-container{padding:7px 8px 7px}
+            .main-screen{flex-basis:clamp(151px,23dvh,189px)}
+            .visual-full{padding:2px 3.5%;min-height:27px}
+            .playlist-container{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:105px;gap:7px}
+            .song-btn{grid-template-columns:minmax(0,1fr) 34px;gap:3px}
+            .song-order-label{font-size:.7rem}
+            .song-settings-trigger{width:30px;height:30px;min-width:30px}
+            .song-drag-handle{width:30px;height:29px}
+            .song-name{font-size:clamp(.86rem,3.8vw,1.03rem);line-height:1.28}
+            .volume-sidebar{flex-basis:48px;min-height:48px;height:48px}
+            .mute-btn{flex-basis:37px}
+        }
+        @media (pointer:coarse) and (max-width:720px) and (orientation:landscape){
+            .main-screen{flex-basis:135px;gap:3px}
+            .top-bar{flex-basis:22px;height:22px}
+            .visual-full{min-height:18px;margin:0 auto 1px}
+            .progress-wrapper{height:22px;min-height:22px}
+            .control-row{height:32px;min-height:32px}
+            .playlist-container{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:78px;gap:6px}
+            .song-settings-trigger{height:27px;width:27px;min-width:27px}
+            .song-drag-handle{height:22px}
+            .volume-sidebar{flex-basis:39px;min-height:39px;height:39px}
+        }
+        @media (pointer:coarse) and (min-width:1101px){
+            .playlist-container{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:102px}
         }
     </style>
 </head>
