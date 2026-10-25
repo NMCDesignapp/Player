@@ -28,14 +28,22 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Locate hosted Android SDK
+        run: |
+          echo "Using ANDROID_HOME=${ANDROID_HOME}"
+          which sdkmanager || true
+          ls -la "${ANDROID_HOME}/cmdline-tools" || true
       - name: Set up Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
       - name: Install SDK 35
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          set -e
+          if ! command -v sdkmanager >/dev/null 2>&1; then
+            export PATH="${ANDROID_HOME}/cmdline-tools/16.0/bin:${PATH}"
+          fi
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Bundle offline player, icons and Font Awesome
         run: |
           set -euo pipefail
