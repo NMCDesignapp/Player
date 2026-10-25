@@ -6,6 +6,12 @@ on:
       - 'index.html'
       - 'android/**'
       - '.github/workflows/build-android.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'android/**'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
 permissions:
